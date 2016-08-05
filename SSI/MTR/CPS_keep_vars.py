@@ -5,11 +5,10 @@ import random
 from patsy import dmatrix
 import csv
 
-'''This code is used to define the variables thatwe use in later regressions and machine learning techniques'''
+'''This code is used to define the variables that we use in SSI MTR computation later 
+when we use regressions , Income Rules, and machine learning techniques'''
 
-# CPS_dataset1 = pd.read_csv('cpsmar2013.csv')
-CPS_dataset2 = pd.read_csv('cpsmar2014t.csv')
-# CPS_dataset3 = pd.read_csv('cpsmar2015.csv')
+CPS = pd.read_csv('cpsmar2014t.csv')
 
 
 columns_to_keep = ['ssi_val', 'ssi_yn','csp_val', 'rnt_val', 'div_val', 'vet_val', 'a_maritl', 'ssikidyn', 'resnssi1', 'resnssi2', 'marsupwt', 'a_age', 'gestfips',
@@ -20,10 +19,11 @@ columns_to_keep = ['ssi_val', 'ssi_yn','csp_val', 'rnt_val', 'div_val', 'vet_val
                    'ffpos', 'fh_seq', 'finc_ssi', 'ftot_r', 'ftotval', 'ptot_r', 'ptotval',
                    'peridnum', 'paw_yn', 'filestat', 'a_ftpt', 'a_spouse']
 
-# CPS_dataset1 = CPS_dataset1[columns_to_keep]
-CPS_dataset2 = CPS_dataset2[columns_to_keep]
-# CPS_dataset3 = CPS_dataset3[columns_to_keep]
+CPS = CPS[columns_to_keep]
+
 def count_parents(earned_income, unearned_income, deemed = None):
+	'''Here we define our countable income variable'''
+
 	SSI_countable = earned_income + unearned_income
 
 	#Allowing only positive values
@@ -52,32 +52,13 @@ def count_parents(earned_income, unearned_income, deemed = None):
 
 	return SSI_countable
 
-def countable(earned_income, unearned_income, deemed = None):
-	if deemed is not None:
-		unearned_income += deemed
-	# Accounting for $65 per month exclusions and .5 * $65 for earned income
-	count_unearned_income = unearned_income.copy()
-	count_earned_income = earned_income.copy()
-	twoforty = pd.Series(np.ones(len(count_unearned_income))*240.)
-	#(Assuming that their income is distributed equally among each month)
-	count_unearned_income[(count_earned_income + count_unearned_income) <= 240] = 0
-	count_earned_income[(count_earned_income + count_unearned_income) <= 240] = 0
-	remainder = twoforty[((count_earned_income + count_unearned_income) > 240) & (count_unearned_income <= 240)] - \
-		count_unearned_income[((count_earned_income + count_unearned_income) > 240) & (count_unearned_income <= 240)]
-	count_unearned_income[
-		((count_earned_income + count_unearned_income) > 240) & (count_unearned_income <= 240)] = 0
-	count_earned_income[
-		((count_earned_income + count_unearned_income) > 240) & (count_unearned_income <= 240)] -= remainder
-	count_unearned_income[(count_unearned_income > 240)] -= twoforty[(count_unearned_income > 240)]
-	count_earned_income[(count_earned_income > 0) & (count_earned_income <= (65 * 12))] = 0.
-	count_earned_income[(count_earned_income > 0) & (count_earned_income > (65 * 12))] -= (65. * 12)
-	count_earned_income[(count_earned_income > 0) & (count_earned_income > (65 * 12))] /= 2.
-	count_income = count_unearned_income + count_earned_income
-	return count_income
 
 def Init_CPS_Vars(CPS):
 
 	'''
+	Here we initialize the variables that we use in the
+	CPS, and clean the data.
+
 				Variables within the CPS that we use:
 
 	    ssi_val     Supplemental Security income amount received
@@ -119,6 +100,7 @@ def Init_CPS_Vars(CPS):
 	    ptot_r      Person income, total
 	    ptotval     Person income, total
 	    peridnum    Unique Person identifier
+
 	'''
 	CPS = CPS.replace({'None or not in universe' : 0.}, regex = True)
 	CPS = CPS.replace({'Not in universe' : 0.}, regex = True)
@@ -166,6 +148,7 @@ def Init_CPS_Vars(CPS):
 	d5 = (CPS.a_age < 65) & (CPS.mcare == 'Yes')
 	work_disability = (d1|d2|d3|d4|d5)
 	disability = pd.to_numeric(np.where(CPS.oi_off=='State disability payments', CPS.oi_val, 0))
+	# Calculating deemed income:
 	ineligible_children = np.where(no_public_assistance & (student_under22|under_18), 1, 0)
 	combined = np.where((disability==1)|(work_disability==1), 1, 0)
 	aged = np.where(CPS.a_age>=65, 1, 0)
@@ -199,54 +182,43 @@ def Init_CPS_Vars(CPS):
 	parents_eligible = parents_eligible[['peridnum', 'deemed_income']]
 	CPS = pd.merge(CPS, parents_eligible, on=['peridnum'], how='left')
 	return CPS
-# CPS1 = Init_CPS_Vars(CPS_dataset1)
-CPS2 = Init_CPS_Vars(CPS_dataset2)
-# CPS3 = Init_CPS_Vars(CPS_dataset3)
 
-# CPS_dummy_states1 = dmatrix('C(gestfips)- 1', CPS1, return_type='dataframe')
-# CPS_dummy_states2 = dmatrix('C(gestfips)- 1', CPS2, return_type='dataframe')
-# # CPS_dummy_states3 = dmatrix('C(gestfips)- 1', CPS3, return_type='dataframe')
 
-# # i = 0
-# # for name in CPS_dummy_states1.columns.values:
-# # 	CPS_dummy_states1.rename(columns={name : str('gestfips: '+ str(i))}, inplace=True)
-# # 	i+=1
-# # CPS1 = pd.concat([CPS1, CPS_dummy_states1], axis = 1)
+CPS = Init_CPS_Vars(CPS)
+# Here we used created dummy variables for each state:
+# CPS_dummy_states1 = dmatrix('C(gestfips)- 1', CPS, return_type='dataframe')
 # i = 0
-# for name in CPS_dummy_states2.columns.values:
-# 	CPS_dummy_states2.rename(columns={name : str('gestfips: '+ str(i))}, inplace=True)
+# for name in CPS_dummy_states1.columns.values:
+# 	CPS_dummy_states1.rename(columns={name : str('gestfips: '+ str(i))}, inplace=True)
 # 	i+=1
-# CPS2 = pd.concat([CPS2, CPS_dummy_states2], axis = 1)
-# i = 0
-# for name in CPS_dummy_states3.columns.values:
-# 	CPS_dummy_states3.rename(columns={name : str('gestfips: '+ str(i))}, inplace=True)
-# 	i+=1
-# CPS3 = pd.concat([CPS3, CPS_dummy_states3], axis = 1)
-# CPS1.to_csv('CPS_SSI_2013.csv', index=False)
-CPS2['deemed_income'] = CPS2['deemed_income'].fillna(0)
-deemed_swap = CPS2.groupby(['fh_seq', 'ffpos'], as_index = False)
+# CPS = pd.concat([CPS, CPS_dummy_states1], axis = 1)
+# CPS.to_csv('CPS_SSI_2013.csv', index=False)
+
+CPS['deemed_income'] = CPS['deemed_income'].fillna(0)
+deemed_swap = CPS.groupby(['fh_seq', 'ffpos'], as_index = False)
 parents = deemed_swap.nth([0,1])
 parents = parents[(parents.a_spouse!='None or children')]
 house_numbers = np.sort(parents.copy().fh_seq.unique())
 family_numbers = np.sort(parents.copy().ffpos.unique())
+# Switching deemed income amounts to spouses for computation:
 for i in house_numbers.copy():
 	for j in family_numbers.copy():
 		parents.loc[parents[(parents['fh_seq'] ==i) & (parents['ffpos']==j)].index,'deemed_income'] = parents['deemed_income'][(parents['fh_seq'] ==i) & (parents['ffpos']==j)].values[::-1]
 
 parents = parents[['peridnum', 'deemed_income']]
-CPS2 = pd.merge(CPS2, parents, on=['peridnum'], how='left')
-eligible_swap = CPS2.groupby(['fh_seq', 'ffpos'], as_index = False)
+CPS = pd.merge(CPS, parents, on=['peridnum'], how='left')
+eligible_swap = CPS.groupby(['fh_seq', 'ffpos'], as_index = False)
 parents = eligible_swap.nth([0,1])
 parents = parents[(parents.a_spouse!='None or children')]
 house_numbers = np.sort(parents.copy().fh_seq.unique())
 family_numbers = np.sort(parents.copy().ffpos.unique())
-CPS2['eligible_spouse'] = np.zeros((len(CPS2['earned_income'])))
+CPS['eligible_spouse'] = np.zeros((len(CPS['earned_income'])))
+# Switching whether or not their spouse is eligible to their spouse
 for i in house_numbers.copy():
 	for j in family_numbers.copy():
 		parents.loc[parents[(parents['fh_seq'] ==i) & (parents['ffpos']==j)].index,'eligible_spouse'] = parents['current_recipient'][(parents['fh_seq'] ==i) & (parents['ffpos']==j)].values[::-1]
 
 parents = parents[['peridnum', 'eligible_spouse']]
-CPS2 = pd.merge(CPS2, parents, on=['peridnum'], how='left')
-# CPS2.to_csv('CPS_SSI.csv', index=False)
-# CPS3.to_csv('CPS_SSI_2015.csv', index=False)
+CPS = pd.merge(CPS, parents, on=['peridnum'], how='left')
+CPS.to_csv('CPS_SSI.csv', index=False)
 
