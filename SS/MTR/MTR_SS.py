@@ -231,10 +231,6 @@ CPS['SS_MTR'] = 0
 CPS['LE'] = 0
 CPS_laborforce = CPS[(CPS['a_age'] >17) & (CPS['a_age'] < 66) & (CPS['a_ftpt'] == str(0.0)) & (CPS['earned_income'] > 0)]
 
-	
-ind = CPS_laborforce.index.values
-CPS_laborforce = CPS_laborforce.iloc[ind[:10]]
-
 CPS_laborforce['LE'] = CPS_laborforce.apply(lambda x: get_LE(x['YrsPstHS'], x['a_age']), axis=1)
 
 pool = Pool(processes = cpu_count())
