@@ -239,7 +239,7 @@ laborforce_MTR_list = (pool.map(get_SS_MTR, df_split))
 laborforce_MTR = pd.concat(laborforce_MTR_list)
 CPS = CPS.loc[~CPS.index.isin(laborforce_MTR.index)]
 CPS = pd.concat([laborforce_MTR, CPS], axis = 0, join = 'outer').sort_index()
-CPS['SS_MTR'].to_csv('SS_MTR.csv', header = 'SS_MTR', index=False)
+CPS[['SS_MTR', 'peridnum']].to_csv('SS_MTR.csv', header = 'SS_MTR', index=False)
 
 
 
