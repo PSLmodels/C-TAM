@@ -25,8 +25,8 @@ from sklearn.svm 				 import SVR
 from patsy                       import dmatrix
 
 '''This script calculates the SSI MTRs for each individual in the March
-2014 CPS file. Outputs dataframe with Income Rules MTRs, 
-and Random Forest MTRs to a seperate csv file'''
+2014 CPS file. Writes dataframe with Income Rules MTRs, Random Forest MTRs,,
+regression MTRs and personal id number to a seperate .csv file'''
 
 def Fed_SSI(married, countable_income, deemed_income):
         '''Simple income fules for federal SSI benefit'''

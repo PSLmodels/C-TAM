@@ -5,12 +5,15 @@ import random
 from patsy import dmatrix
 import csv
 
-'''This code is used to define the variables that we use in later regressions and machine learning techniques'''
+'''This code defines and sets the variables that we input into
+SS online calculator. You must have the file cpsmar2014t.csv,
+which is the 2014 March CPS file.'''
 
+# Reading in 2014 March CPS file:
 CPS_dataset = pd.read_csv('cpsmar2014t.csv')
 
-
-columns_to_keep = ['ss_val', 'ss_yn','csp_val', 'rnt_val', 'div_val', 'vet_val', 'a_maritl', 'resnssi1', 'resnssi2', 'marsupwt', 'a_age', 'gestfips',
+# Defining the colunms to extract from CPS that we'll use in calculation:
+columns_to_keep = ['ss_val', 'ss_yn','csp_val', 'rnt_val', 'div_val', 'vet_val', 'a_maritl', 'marsupwt', 'a_age', 'gestfips',
                    'rsnnotw', 'vet_typ1', 'pemlr', 'mcare',
                    'wsal_val', 'semp_val', 'frse_val', 'ss_val', 'rtm_val', 'oi_off', 'oi_val',
                    'uc_yn', 'uc_val', 'int_yn', 'int_val', 
@@ -22,24 +25,15 @@ CPS = CPS_dataset[columns_to_keep]
 def Init_CPS_Vars(CPS):
 
 	'''
+	Initializes the variables that we use to calculate SS MTR
+
 				Variables within the CPS that we use:
 
-	    ssi_val     Supplemental Security income amount received
-	    ssi_yn      Supplemental Security income received
-	    ssikidyn    Supplemental Security income, child received
-	    rednssi1    Supplemental Security income, reason 1
-	    rednssi2    Supplemental Security income, reason 2
+	    ss_val      Social Security income received
+	    ss_yn       If received Social Security Income
 	    marsupwt    March supplement final weight
 	    a_age       Age
 	    gestfips    FIPS State Code
-	    pedisdrs    Disability, dressing or bathing
-	    pedisear    Disability, hearing
-	    pediseye    Disability, seeing
-	    pedisout    Disability, doctor visits, shopping alone
-	    pedisphy    Disability, walking, climbing stairs
-	    pedisrem    Disability, remembering
-	    dis_hp      Health problem or a disability which prevents working
-	    rsnnotw     Reason for not working
 	    vet_typ1    Veterans payments, type 1
 	    pemlr       Monthly labor force recode
 	    mcare       Medicare coverage
@@ -64,6 +58,7 @@ def Init_CPS_Vars(CPS):
 	    ptotval     Person income, total
 	    peridnum    Unique Person identifier
 	'''
+	# Replacing values with numbers so that we can use in LE regression:
 	CPS = CPS.replace({'None or not in universe' : 0.}, regex = True)
 	CPS = CPS.replace({'Not in universe' : 0.}, regex = True)
 	CPS = CPS.replace({'NIU' : 0.}, regex = True)
@@ -85,4 +80,5 @@ def Init_CPS_Vars(CPS):
 
 
 CPS = Init_CPS_Vars(CPS)
+# Saving variables, and smaller, more managable df to .csv file:
 CPS.to_csv('CPS_SS.csv', index=False)
