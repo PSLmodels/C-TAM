@@ -11,6 +11,12 @@ import numpy 						as np
 from selenium.webdriver.common.keys import Keys
 import multiprocessing 				as mp
 from multiprocessing 				import Pool, Process, Manager, cpu_count
+import time
+from selenium 						import webdriver
+from selenium.common.exceptions 	import TimeoutException
+from selenium.webdriver.support.ui 	import WebDriverWait
+from selenium.webdriver.support 	import expected_conditions as EC
+from selenium.webdriver.common.by 	import By
 
 '''This script calculates the SS MTRs for each individual in the March
 2014 CPS file. Must run CPS_keep_SSVars.py first before running this script
@@ -35,6 +41,7 @@ def get_SS_MTR(df_list):
 	ind = df.index.values
 	MTR_list = []
 	for i in ind:
+		print i
 		# Goes through each individual in dataframe
 		# and inputs their info into online SS
 		# calculator:
@@ -43,6 +50,7 @@ def get_SS_MTR(df_list):
 		LE = df['LE'][i]
 		# Creates a web browser:
 		browser = webdriver.PhantomJS("/usr/bin/phantomjs", service_args=['--ssl-protocol=any'])
+		browser.implicitly_wait(10)
 		browser.get('https://www.ssa.gov/planners/retire/AnypiaApplet.html')
 
 		bday = browser.find_element_by_id("bday")
@@ -89,6 +97,8 @@ def get_SS_MTR(df_list):
 			future.send_keys(Keys.DELETE)
 			future.send_keys(str(LE[j]))
 		# Clicks the "Calculate Benefit" button:
+		timeout = 200
+
 		browser.find_element_by_id("Button1").click()
 		# Extracts the "monthly calculated benefit amount":
 		SSamount = browser.find_element_by_id("Text105")
