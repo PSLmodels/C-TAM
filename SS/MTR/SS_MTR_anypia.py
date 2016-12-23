@@ -103,8 +103,11 @@ CPS_laborforce['LE_adjusted'] = CPS_laborforce.apply(lambda x: get_LE2(x['YrsPst
 
 
 def get_txt(sex, age, experience, peridnum, LE):
+	'''
+	This function formats the income information correctly for the
+	anypiab.exe program 
+	'''
 	counter = 0
-
 	line1 = "01{}{}01011950".format(str(peridnum)[-9:], sex)
 	line3 = "031012014"
 	line6 = "06{}2014".format(2014-experience)
