@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import random
-from patsy import dmatrix
 import csv
 
 '''This code defines and sets the variables that we input into
@@ -18,7 +17,7 @@ columns_to_keep = ['ss_val', 'ss_yn','csp_val', 'rnt_val', 'div_val', 'vet_val',
                    'wsal_val', 'semp_val', 'frse_val', 'ss_val', 'rtm_val', 'oi_off', 'oi_val',
                    'uc_yn', 'uc_val', 'int_yn', 'int_val', 
                    'ffpos', 'fh_seq', 'ftot_r', 'ftotval', 'ptot_r', 'ptotval',
-                   'peridnum', 'paw_yn', 'filestat', 'a_ftpt', 'a_spouse', 'a_hga']
+                   'peridnum', 'paw_yn', 'filestat', 'a_ftpt', 'a_spouse', 'a_hga', 'a_sex']
 
 CPS = CPS_dataset[columns_to_keep]
 
@@ -64,6 +63,8 @@ def Init_CPS_Vars(CPS):
 	CPS = CPS.replace({'NIU' : 0.}, regex = True)
 	CPS = CPS.replace({'Did not receive SSI' : 0.}, regex = True)
 	CPS = CPS.replace({'Received SSI' : 1.}, regex = True)
+	CPS = CPS.replace({'Female' : 1}, regex = True)
+	CPS = CPS.replace({'Male' : 1}, regex = True)
 
 
 	CPS.a_age = np.where(CPS.a_age == "80-84 years of age",
@@ -76,6 +77,7 @@ def Init_CPS_Vars(CPS):
 	CPS_earned = (CPS[['wsal_val' ,'semp_val','frse_val']].astype(float)).copy()
 	earned_income = CPS_earned.sum(axis = 1)
 	CPS['earned_income'] = earned_income
+
 	return CPS
 
 
