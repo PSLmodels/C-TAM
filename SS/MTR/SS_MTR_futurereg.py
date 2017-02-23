@@ -12,15 +12,29 @@ from subprocess import Popen, PIPE
 import pickle
 from scipy.interpolate import InterpolatedUnivariateSpline
 
+'''This script calculates the Social Security Marginal Tax Rates for 
+individuals in the 2014 CPS. We use our regression to calculate future earnings 
+here for SS anypiab calculator to calculate future earnings after the year
+2014.
+
+Refer to SS_MTR_nofuture.py for a more detailed step-by-step documentation
+
+The differences between the three SS_MTR files are found in the functions
+get_LE, and get_txt  '''
 
 def get_LE(x, age, wages, adjustment):
 	'''
-	Creates the Lifetime Earnings vector before adjustment
+	Creates the Lifetime Earnings vector with and without adjustment
 
 	inputs:   
-		x:  	scalar, the number of post-secondary years of education.
-		age: 	scalar, age of individual.
-		wages:  scalar 
+		x:  	    scalar, the number of post-secondary years of education.
+		age: 	    scalar, age of individual.
+		wages:      vector, wage inflation rates since 1950. Used to adjust
+				    for wage inflation.
+		adjustment: scalar, the amount that we adjust the year 2014 earnings
+					to calculate MTRs.
+	outputs:
+
 	'''
 	years_worked = age - (17 + x)
 	years_to_work = 65 - (17 + x) #maybe 64
@@ -39,8 +53,19 @@ def get_LE(x, age, wages, adjustment):
 
 def get_txt(sex, age, experience, peridnum, LE):
 	'''
-	This function formats the income information correctly for the
-	anypiab.exe program 
+	This function creates a usable .pia entry for each individual
+	in the CPS that will be used in the anypiab calculator.
+
+	inputs:   
+		sex:  	      scalar
+		age: 	      scalar, age of individual.
+		experience:   scalar, the amount of years has been in the work force.
+		peridnum:     scalar, CPS identification number
+		LE:			  vector, calculated lifetime earnings of respondent.
+	
+	outputs:
+		entry:        string, a usable entry for the anypiab calcuator.
+
 	'''
 	counter = 0
 	line1 = "01{}{}0101{}".format(str(peridnum)[-9:], sex, 2014 - age)
@@ -67,6 +92,10 @@ def LE_reg(CPS, plot = False):
 	'''
 	Uses a linear regression to approximate coefficient to Mincer's earnings equation 
 	which approximates Lifetime Earnings 
+
+	Mincers: ln(earnings) = beta_0 + beta_1 * education + beta_2 * work_experience + beta_3 * work_experience^2 
+
+	returns: array, the fitted parameters of the regression.
 	'''
 	sample = CPS.copy()[(CPS['a_age'] >16) & (CPS['a_age'] < 66) & (CPS['a_ftpt'] == str(0.0)) & (CPS['earned_income'] > 0)]
 	earned_income = sample['earned_income']
@@ -129,14 +158,6 @@ CPS_laborforce['entries_adjusted'] = CPS_laborforce.apply(lambda x: get_txt(x['a
 
 CPS_laborforce['anypiabID'] = CPS_laborforce['peridnum'].apply(lambda row: str(row)[-9:])
 
-# pickled = CPS_laborforce.to_pickle("CPS.pickle")
-# pickled1 = CPS.to_pickle("CPS_full.pickle")
-
-# CPS = pd.read_pickle("CPS_full.pickle")
-# CPS_laborforce = pd.read_pickle("CPS.pickle")
-# CPS_laborforce['entries'].to_frame().to_csv('CPS_anypiab.pia', index = None, header= None)
-# CPS_laborforce = CPS_laborforce.iloc[:10]
-
 piab_id_list_adjusted = []
 SS_list_adjusted = []
 piab_id_list = []
@@ -146,7 +167,7 @@ SS_list = []
 for i,indiv in CPS_laborforce.iterrows():
 	thefile = open('CPS.pia', 'w')
 	thefile.write("%s\n" % indiv['entries'])
-	p = Popen('/home/parker/Documents/AEI/Benefits/SS/MTR/anypiab.exe', stdin = PIPE) #NOTE: no shell=True here
+	p = Popen('/home/parker/Documents/AEI/Benefits/SS/MTR/anypiab.exe', stdin = PIPE) 
 	p.communicate('CPS')
 	results = open('output')
 
@@ -172,9 +193,6 @@ df['ID'] = piab_id_list
 df_adjust['SS_adjust'] = SS_list_adjusted
 df_adjust['ID'] = piab_id_list_adjusted
 
-# df.to_csv(path_or_buf='SS.csv', sep=',', na_rep='0')
-# df_adjust.to_csv(path_or_buf='SS_adjust.csv', sep=',', na_rep='0')
-# df_adjust = df_adjust.ix[1:].reset_index()
 df.SS = df.SS.astype(float)
 df_adjust.SS_adjust = df_adjust.SS_adjust.astype(float)
 df = df.merge(df_adjust, on = "ID")

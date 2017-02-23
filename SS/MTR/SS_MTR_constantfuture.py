@@ -12,15 +12,29 @@ from subprocess import Popen, PIPE
 import pickle
 import time
 
+'''This script calculates the Social Security Marginal Tax Rates for 
+individuals in the 2014 CPS. We use the year 2014's earnings (pre-adjustment)
+for all future years of earnings until retirement to use in the  
+SS anypiab calculator.
+
+Refer to SS_MTR_nofuture.py for a more detailed step-by-step documentation
+
+The differences between the three SS_MTR files are found in the functions
+get_LE, and get_txt'''
 
 def get_LE(x, age, wages, adjustment):
 	'''
-	Creates the Lifetime Earnings vector before adjustment
+	Creates the Lifetime Earnings vector with and without adjustment
 
 	inputs:   
-		x:  	scalar, the number of post-secondary years of education.
-		age: 	scalar, age of individual.
-		wages:  scalar 
+		x:  	    scalar, the number of post-secondary years of education.
+		age: 	    scalar, age of individual.
+		wages:      vector, wage inflation rates since 1950. Used to adjust
+				    for wage inflation.
+		adjustment: scalar, the amount that we adjust the year 2014 earnings
+					to calculate MTRs.
+	outputs:
+
 	'''
 	years_worked = age - (17 + x)
 	experience = np.arange(0, years_worked + 1)
@@ -45,6 +59,10 @@ def LE_reg(CPS, plot = False):
 	'''
 	Uses a linear regression to approximate coefficient to Mincer's earnings equation 
 	which approximates Lifetime Earnings 
+
+	Mincers: ln(earnings) = beta_0 + beta_1 * education + beta_2 * work_experience + beta_3 * work_experience^2 
+
+	returns: array, the fitted parameters of the regression.
 	'''
 	sample = CPS.copy()[(CPS['a_age'] >16) & (CPS['a_age'] < 66) & (CPS['a_ftpt'] == str(0.0)) & (CPS['earned_income'] > 0)]
 	earned_income = sample['earned_income']
@@ -70,7 +88,7 @@ def LE_reg(CPS, plot = False):
 		plt.title('Accuracy of Linear Regresssion When Predicting earned_income')
 		plt.show()
 	return params
-print 'hi'
+
 adjustment = 500
 wages = np.array(pd.read_csv('averagewages.csv')["Avg_Wage"]).astype(float)
 wages = wages / wages[-1]
@@ -92,8 +110,6 @@ CPS_laborforce = CPS[(CPS['a_age'] >17) & (CPS['a_age'] < 66) & (CPS['a_ftpt'] =
 ind = CPS_laborforce.index.values
 df_LE = CPS_laborforce.apply(lambda x: get_LE(x['YrsPstHS'], x['a_age'], wages, adjustment), axis=1)
 CPS_laborforce = pd.concat([CPS_laborforce, df_LE],  axis = 1)
-
-print 'hi'
 
 def get_txt(sex, age, experience, peridnum, LE):
 	'''
@@ -123,15 +139,6 @@ def get_txt(sex, age, experience, peridnum, LE):
 CPS_laborforce['entries'] = CPS_laborforce.apply(lambda x: get_txt(x['a_sex'], x['a_age'],  x['experience'], x['peridnum'], x['LE']), axis=1)
 CPS_laborforce['entries_adjusted'] = CPS_laborforce.apply(lambda x: get_txt(x['a_sex'], x['a_age'],  x['experience'], x['peridnum'], x['LE_adjusted']), axis=1)
 CPS_laborforce['anypiabID'] = CPS_laborforce['peridnum'].apply(lambda row: str(row)[-9:])
-print 'hi'
-
-# pickled = CPS_laborforce.to_pickle("CPS.pickle")
-# pickled1 = CPS.to_pickle("CPS_full.pickle")
-
-# CPS = pd.read_pickle("CPS_full.pickle")
-# CPS_laborforce = pd.read_pickle("CPS.pickle")
-# CPS_laborforce['entries'].to_frame().to_csv('CPS_anypiab.pia', index = None, header= None)
-# CPS_laborforce = CPS_laborforce.iloc[:10]
 
 piab_id_list_adjusted = []
 SS_list_adjusted = []
@@ -142,7 +149,7 @@ SS_list = []
 for i,indiv in CPS_laborforce.iterrows():
 	thefile = open('CPS.pia', 'w')
 	thefile.write("%s\n" % indiv['entries'])
-	p = Popen('/home/parker/Documents/AEI/Benefits/SS/MTR/anypiab.exe', stdin = PIPE) #NOTE: no shell=True here
+	p = Popen('/home/parker/Documents/AEI/Benefits/SS/MTR/anypiab.exe', stdin = PIPE) 
 	p.communicate('CPS')
 	results = open('output')
 
@@ -168,9 +175,7 @@ df['ID'] = piab_id_list
 df_adjust['SS_adjust'] = SS_list_adjusted
 df_adjust['ID'] = piab_id_list_adjusted
 
-# df.to_csv(path_or_buf='SS.csv', sep=',', na_rep='0')
-# df_adjust.to_csv(path_or_buf='SS_adjust.csv', sep=',', na_rep='0')
-# df_adjust = df_adjust.ix[1:].reset_index()
+
 df.SS = df.SS.astype(float)
 df_adjust.SS_adjust = df_adjust.SS_adjust.astype(float)
 df = df.merge(df_adjust, on = "ID")
