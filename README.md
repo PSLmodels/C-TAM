@@ -16,7 +16,7 @@ Currently this Repo includes the following programs, derived from 2014 CPS March
     - Medicaid: Participation is augmented to match administrative data. Insurance values for each participant are imputed based on Medical Expenditure Penal Survey (MEPS) expenditure data. No MTR is imputed for current version, but may be estimated at the eligible income upper bound in future.
     - Medicare: Insurance values for each participant are imputed based on Medical Expenditure Penal Survey (MEPS) expenditure data. No MTR is imputed.
 
-- Program based CPS Tax-Unit (link; footnote created by John O’hare)
+- Program based CPS Tax-Unit<sup>1</sup>
     - Affordable Care Act Premium Tax Credit (ACA PTC): Both participation and benefit amounts are estimated using employment, current insurance coverage, and county level residence at tax-unit level, with the ACA PTC calculator developed by Martin Holmer and Nikolai Boboshko (link to calculator).  
 
 This Repo will include the following programs in the near future:
@@ -28,3 +28,6 @@ This Repo will include the following programs in the near future:
 - Women, Infants and Children (WIC)
 - Unemployment Insurance
 - Workman’s Compensation
+
+
+1. This dataset is created by John O'hare from Quantria Strategies. Documentation can be found on Quantria [website](http://www.quantria.com/assets/img/TechnicalDocumentationV4-2.pdf).
