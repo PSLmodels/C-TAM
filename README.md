@@ -4,7 +4,7 @@ Benefits and participation for welfare and transfer programs are systematically 
 
 The open-source Benefits-Augmenter model adjusts the CPS ASEC for the under-reporting of welfare and transfer program participation and benefits, imputes benefits where they are excluded, and imputes marginal tax rates that stem from welfare and transfer programs. Adjusted welfare and transfer data can serve as the basis for micro-simulating policy reforms (for example, [Basic Income](https://github.com/open-source-economics/Benefits/blob/master/Basic%20Income.pdf)) that replace existing welfare and transform programs.
 
-Currently this Repo includes the following programs, derived from 2014 CPS March Supplement:
+Currently this Repo includes the following programs<sup>1</sup>, derived from 2014 CPS March Supplement:
 
 - Programs with participation and benefits based on CPS ASEC:
     - Supplemental Security Income ([SSI](https://github.com/open-source-economics/Benefits/tree/master/SSI)): The MTR is imputed from program rules. We are also experimenting with machine learning algorithms to estimate MTR from original CPS data.
@@ -16,8 +16,8 @@ Currently this Repo includes the following programs, derived from 2014 CPS March
     - Medicaid: Participation is augmented to match administrative data. Insurance values for each participant are imputed based on Medical Expenditure Penal Survey (MEPS) expenditure data. No MTR is imputed for current version, but may be estimated at the eligible income upper bound in future.
     - Medicare: Insurance values for each participant are imputed based on Medical Expenditure Penal Survey (MEPS) expenditure data. No MTR is imputed.
 
-- Program based CPS Tax-Unit<sup>1</sup>
-    - Affordable Care Act Premium Tax Credit (ACA PTC): Both participation and benefit amounts are estimated using employment, current insurance coverage, and county level residence at tax-unit level, with the ACA PTC calculator developed by Martin Holmer and Nikolai Boboshko<sup>2</sup>.  
+- Program based CPS Tax-Unit<sup>2</sup>
+    - Affordable Care Act Premium Tax Credit (ACA PTC): Both participation and benefit amounts are estimated using employment, current insurance coverage, and county level residence at tax-unit level, with the ACA PTC calculator developed by Martin Holmer and Nikolai Boboshko<sup>3</sup>.  
 
 This Repo will include the following programs in the near future:
 
@@ -30,5 +30,6 @@ This Repo will include the following programs in the near future:
 - Workman’s Compensation
 
 
-1. This dataset is created by John O'hare from Quantria Strategies. Documentation can be found on Quantria [website](http://www.quantria.com/assets/img/TechnicalDocumentationV4-2.pdf).
-2. OSPC's ACA PTC [calculator](http://chiselapp.com/user/mrh/repository/OSPC-ACA/doc/trunk/www/home.wiki).
+1. Both code scripts and documentation in PDF formats are included in this Repository. For editable documentation, please contact Amy Xu at amy.xu@aei.org.
+2. This dataset is created by John O'hare from Quantria Strategies. Documentation can be found on Quantria [website](http://www.quantria.com/assets/img/TechnicalDocumentationV4-2.pdf).
+3. OSPC's ACA PTC [calculator](http://chiselapp.com/user/mrh/repository/OSPC-ACA/doc/trunk/www/home.wiki).
