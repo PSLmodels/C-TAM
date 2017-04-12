@@ -2,7 +2,7 @@
 
 Benefits and participation for welfare and transfer programs are systematically underreported in the Current Population Survey (CPS) Annual Social and Economic supplement (ASEC). For some programs like Medicaid and Medicare, participation is reported but benefits are excluded entirely. The implicit marginal tax rates that stem from transfer and benefits programs are not included in the CPS.
 
-The CPS Transfer Augmentation Model (C-TAM) model adjusts the CPS ASEC for the under-reporting of welfare and transfer program participation and benefits, imputes benefits where they are excluded, and imputes marginal tax rates that stem from welfare and transfer programs. Adjusted welfare and transfer data can serve as the basis for micro-simulating policy reforms (for example, [Basic Income](https://github.com/open-source-economics/Benefits/blob/master/Basic%20Income.pdf)) that replace existing welfare and transform programs.
+The CPS Transfer Augmentation Model (C-TAM) model adjusts the CPS ASEC for the under-reporting of welfare and transfer program participation and benefits, imputes benefits where they are excluded, and imputes marginal tax rates that stem from welfare and transfer programs. Adjusted welfare and transfer data can serve as the basis for micro-simulating policy reforms (for example, [Basic Income](https://github.com/open-source-economics/Benefits/blob/master/Basic%20Income.pdf)) that replace existing welfare and transfer programs.
 
 Currently this Repo includes the following programs<sup>1</sup>, derived from 2014 CPS March Supplement:
 
