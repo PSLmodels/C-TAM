@@ -2,7 +2,7 @@
 
 Benefits and participation for welfare and transfer programs are systematically underreported in the Current Population Survey (CPS) Annual Social and Economic supplement (ASEC). For some programs like Medicaid and Medicare, participation is reported but benefits are excluded entirely. The implicit marginal tax rates that stem from transfer and benefits programs are not included in the CPS.
 
-The open-source Benefits-Augmenter model adjusts the CPS ASEC for the under-reporting of welfare and transfer program participation and benefits, imputes benefits where they are excluded, and imputes marginal tax rates that stem from welfare and transfer programs. Adjusted welfare and transfer data can serve as the basis for micro-simulating policy reforms (for example, [Basic Income](https://github.com/open-source-economics/Benefits/blob/master/Basic%20Income.pdf)) that replace existing welfare and transform programs.
+The CPS Transfer Augmentation Model (C-TAM) model adjusts the CPS ASEC for the under-reporting of welfare and transfer program participation and benefits, imputes benefits where they are excluded, and imputes marginal tax rates that stem from welfare and transfer programs. Adjusted welfare and transfer data can serve as the basis for micro-simulating policy reforms (for example, [Basic Income](https://github.com/open-source-economics/Benefits/blob/master/Basic%20Income.pdf)) that replace existing welfare and transform programs.
 
 Currently this Repo includes the following programs<sup>1</sup>, derived from 2014 CPS March Supplement:
 
@@ -30,6 +30,6 @@ This Repo will include the following programs in the near future:
 - Workman’s Compensation
 
 
-1. Both code scripts and documentation in PDF formats are included in this Repository. For editable documentation, please contact Amy Xu at amy.xu@aei.org.
+1. Both code scripts and documentation in PDF format are included in this Repository. For editable documentation, please contact Amy Xu at amy.xu@aei.org.
 2. This dataset is created by John O'hare from Quantria Strategies. Documentation can be found on Quantria [website](http://www.quantria.com/assets/img/TechnicalDocumentationV4-2.pdf).
 3. OSPC's ACA PTC [calculator](http://chiselapp.com/user/mrh/repository/OSPC-ACA/doc/trunk/www/home.wiki).
