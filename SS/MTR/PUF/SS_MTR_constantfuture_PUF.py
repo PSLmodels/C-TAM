@@ -143,10 +143,6 @@ def get_txt(sex, age, experience, peridnum, LE):
 
 CPS_laborforce['entries'] = CPS_laborforce.apply(lambda x: get_txt(x['a_sex'], x['a_age'],  x['experience'], x['peridnum'], x['LE']), axis=1)
 CPS_laborforce['entries_adjusted'] = CPS_laborforce.apply(lambda x: get_txt(x['a_sex'], x['a_age'],  x['experience'], x['peridnum'], x['LE_adjusted']), axis=1)
-<<<<<<< HEAD:SS/MTR/PUF/SS_MTR_constantfuture_PUF.py
-=======
-CPS_laborforce['anypiabID'] = CPS_laborforce['peridnum'].apply(lambda row: str(row)[-9:])
->>>>>>> 1f7059172f81ed123298ae4d1f100352c7ef9a4f:SS/MTR/SS_MTR_constantfuture.py
 
 piab_id_list_adjusted = []
 SS_list_adjusted = []
