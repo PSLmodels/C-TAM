@@ -170,7 +170,7 @@ def impute(cps_alldata, ssa_data):
 
 			#Imputing the benefits for given state
 			avemonbensimputed.append(-combined_data.loc[state,'ben_diff']/imputed_state['marsupwt'].sum())
-			imputed_state['ss_val'] = -combined_data.loc[state,'ben_diff']/imputed_state['marsupwt'].sum()
+			imputed_state['ss_val'] = -combined_data.loc[state,'ben_diff']/imputed_state['marsupwt'].sum() * 12
 			imputed_state['ss_wtt'] = imputed_state['marsupwt']*imputed_state['ss_val']
 			imputed = imputed.append(imputed_state)
 			nonimputed = nonimputed.append(nonimputed_state)
