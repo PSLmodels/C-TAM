@@ -19,8 +19,11 @@ SS anypiab calculator to calculate future earnings after the year
 
 The differences between the three SS_MTR files are found in the functions
 get_LE, and get_txt'''
+<<<<<<< HEAD:SS/MTR/PUF/SS_MTR_nofuture_PUF.py
 # def get_ratio(x, spouse_wage):
 
+=======
+>>>>>>> 1f7059172f81ed123298ae4d1f100352c7ef9a4f:SS/MTR/SS_MTR_nofuture.py
 
 def get_LE(x, age, wages, adjustment):
 	'''
@@ -48,9 +51,15 @@ def get_LE(x, age, wages, adjustment):
 		LE_adjusted = LE
 	else:
 		LE = (LE * wages[-len(LE):]).astype(int)#adjusting for wage inflation
+<<<<<<< HEAD:SS/MTR/PUF/SS_MTR_nofuture_PUF.py
 		LE_new = LE.astype(int)
 		LE_adjusted = LE_new.copy()
 		LE_adjusted[-1] += adjustment#adding adjustment on 2014 earnings
+=======
+	LE_new = np.append(LE, np.zeros(65 - age)).astype(int)
+	LE_adjusted = LE_new.copy()
+	LE_adjusted[len(LE)-1] += adjustment#adding adjustment on 2014 earnings
+>>>>>>> 1f7059172f81ed123298ae4d1f100352c7ef9a4f:SS/MTR/SS_MTR_nofuture.py
 	return pd.Series({'LE': LE_new, 'LE_adjusted': LE_adjusted})
 
 
@@ -91,6 +100,7 @@ def LE_reg(CPS, plot = False):
 adjustment = 500
 wages = np.array(pd.read_csv('averagewages.csv')["Avg_Wage"]).astype(float)
 wages = wages / wages[-1]
+<<<<<<< HEAD:SS/MTR/PUF/SS_MTR_nofuture_PUF.py
 CPS = pd.read_csv('puf_parker.csv')
 CPS = CPS[[ 'e00200p' ,'e00200s' ,'e00900p', 'e00900s','e02100p' ,'e02100s', 'age_head', 'age_spouse', 'hga_head', 'hga_spouse', 'ftpt_head', 'ftpt_spouse', 'gender_head', 'gender_spouse','peridnum', 'RECID']]
 CPS['earned_income_spouse'] = CPS[['e00200s','e00900s','e02100s']].sum(axis = 1)
@@ -107,6 +117,18 @@ CPS.a_sex = CPS.a_sex - 1
 df = pd.Series([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 8, 11, 11], \
 index=[0, 31, 32, 33, 34, 35,36, 37, 38,\
 39, 40, 41, 42, 43, 44, 45, 46])
+=======
+CPS = pd.read_csv('CPS_SS.csv')
+#The following creates our YrsPstHS variable, which represents the amount of education that one receives past high school.
+df = pd.Series([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 5, 7, 10, 10], \
+index=["Children", "Less than 1st grade", "1st,2nd,3rd,or 4th grade",\
+"5th or 6th grade", "7th and 8th grade", "9th grade",\
+"10th grade", "11th grade", "12th grade no diploma",\
+"High school graduate - high", "Some college but no degree",\
+"Associate degree in college -",\
+"Bachelor's degree (for", "Master's degree (for", "Professional school degree (for",\
+"Doctorate degree (for"])
+>>>>>>> 1f7059172f81ed123298ae4d1f100352c7ef9a4f:SS/MTR/SS_MTR_nofuture.py
 CPS['YrsPstHS'] = CPS['a_hga'].map(df)
 CPS['experience'] = CPS['a_age'] - CPS['YrsPstHS'] - 17  
 CPS['experienceSquared'] = CPS['experience'] * CPS['experience']
@@ -139,7 +161,11 @@ def get_txt(sex, age, experience, peridnum, LE):
 	#Second line contains the date of retirement
 	line3 = "03101{}".format(2014 + (65 - age))
 	# Third line contains date of first earnings and last earnings
+<<<<<<< HEAD:SS/MTR/PUF/SS_MTR_nofuture_PUF.py
 	line6 = "06{}{}".format(2014 - experience, 2014)
+=======
+	line6 = "06{}{}".format(2014 - experience, 2014 + (65 - age) )
+>>>>>>> 1f7059172f81ed123298ae4d1f100352c7ef9a4f:SS/MTR/SS_MTR_nofuture.py
 	#Fifth line contains identifier
 	line16 = "16{}".format(peridnum)
 	#These lines contain the earnings for each individual
@@ -162,6 +188,10 @@ def get_txt(sex, age, experience, peridnum, LE):
 CPS_laborforce['entries'] = CPS_laborforce.apply(lambda x: get_txt(x['a_sex'], x['a_age'],  x['experience'], x['peridnum'], x['LE']), axis=1)
 CPS_laborforce['entries_adjusted'] = CPS_laborforce.apply(lambda x: get_txt(x['a_sex'], x['a_age'],  x['experience'], x['peridnum'], x['LE_adjusted']), axis=1)
 
+<<<<<<< HEAD:SS/MTR/PUF/SS_MTR_nofuture_PUF.py
+=======
+CPS_laborforce['anypiabID'] = CPS_laborforce['peridnum'].apply(lambda row: str(row)[-9:])
+>>>>>>> 1f7059172f81ed123298ae4d1f100352c7ef9a4f:SS/MTR/SS_MTR_nofuture.py
 
 # These lists will be populated with the id numbers and SS benefit amounts of each individual
 piab_id_list_adjusted = []
