@@ -17,7 +17,7 @@ columns_to_keep = ['ss_val', 'ss_yn','csp_val', 'rnt_val', 'div_val', 'vet_val',
                    'wsal_val', 'semp_val', 'frse_val', 'ss_val', 'rtm_val', 'oi_off', 'oi_val',
                    'uc_yn', 'uc_val', 'int_yn', 'int_val', 
                    'ffpos', 'fh_seq', 'ftot_r', 'ftotval', 'ptot_r', 'ptotval',
-                   'peridnum', 'paw_yn', 'filestat', 'a_ftpt', 'a_spouse', 'a_hga', 'a_sex', 'prdtrace']
+                   'peridnum', 'paw_yn', 'filestat', 'a_ftpt', 'a_spouse', 'a_hga', 'a_sex']
 
 CPS = CPS_dataset[columns_to_keep]
 
