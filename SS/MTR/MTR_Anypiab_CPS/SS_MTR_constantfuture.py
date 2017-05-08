@@ -11,6 +11,7 @@ import sys, os
 from subprocess import Popen, PIPE
 import pickle
 import time
+from itertools import *
 
 '''This script calculates the Social Security Marginal Tax Rates for 
 individuals in the 2014 CPS. We use the year 2014's earnings (pre-adjustment)
@@ -37,6 +38,8 @@ def get_LE(x, age, wages, adjustment):
 
 	'''
 	years_worked = age - (17 + x)
+	if years_worked < 0:
+		years_worked = 0
 	experience = np.arange(0, years_worked + 1)
 	experienceSquared = experience*experience
 	ones = np.ones(len(experience))
@@ -90,6 +93,7 @@ def LE_reg(CPS, plot = False):
 	return params
 
 adjustment = 500
+cwd = os.getcwd()
 wages = np.array(pd.read_csv('averagewages.csv')["Avg_Wage"]).astype(float)
 wages = wages / wages[-1]
 CPS = pd.read_csv('CPS_SS.csv')
@@ -107,7 +111,8 @@ CPS['experienceSquared'] = CPS['experience'] * CPS['experience']
 params = LE_reg(CPS)
 CPS['SS_MTR'] = 0
 CPS_laborforce = CPS[(CPS['a_age'] >17) & (CPS['a_age'] < 66) & (CPS['a_ftpt'] == str(0.0)) & (CPS['earned_income'] > 0)]
-ind = CPS_laborforce.index.values
+CPS_laborforce = CPS_laborforce.loc[[2,5,7,11], :]
+
 df_LE = CPS_laborforce.apply(lambda x: get_LE(x['YrsPstHS'], x['a_age'], wages, adjustment), axis=1)
 CPS_laborforce = pd.concat([CPS_laborforce, df_LE],  axis = 1)
 
@@ -116,6 +121,8 @@ def get_txt(sex, age, experience, peridnum, LE):
 	This function formats the income information correctly for the
 	anypiab.exe program 
 	'''
+	if experience < 0:
+		experience = 0
 	counter = 0
 	line1 = "01{}{}0101{}".format(str(peridnum)[-9:], sex, 2014 - age)
 	line3 = "03101{}".format(2014 + (65 - age))
@@ -149,18 +156,19 @@ SS_list = []
 for i,indiv in CPS_laborforce.iterrows():
 	thefile = open('CPS.pia', 'w')
 	thefile.write("%s\n" % indiv['entries'])
-	p = Popen('/home/parker/Documents/AEI/Benefits/SS/MTR/anypiab.exe', stdin = PIPE) 
+	p = Popen(cwd +'/anypiab.exe', stdin = PIPE) 
 	p.communicate('CPS')
 	results = open('output')
-
 	for counter, line in enumerate(results):
 		piab_id_list.append(indiv.name)
 		SS_list.append(line.split()[2])
 
+# Starting on the second row because always an error thrown on 
+# the first .pia file calculated in the above for loop
 for i,indiv in CPS_laborforce.iterrows():
 	thefile = open('CPS.pia', 'w')
 	thefile.write("%s\n" % indiv['entries_adjusted'])
-	p = Popen('/home/parker/Documents/AEI/Benefits/SS/MTR/anypiab.exe', stdin=PIPE)
+	p = Popen(cwd +'/anypiab.exe', stdin=PIPE)
 	p.communicate('CPS')
 	results = open('output')
 
@@ -179,7 +187,7 @@ df_adjust['ID'] = piab_id_list_adjusted
 df.SS = df.SS.astype(float)
 df_adjust.SS_adjust = df_adjust.SS_adjust.astype(float)
 df = df.merge(df_adjust, on = "ID")
-df['SS_MTR'] = ((df['SS_adjust'] - df['SS']) / adjustment)*12.*13.
+df['SS_MTR'] = ((df.ix[1:,'SS_adjust'] - df['SS']) / adjustment)*12.*13.
 df = df.set_index('ID', drop=True, append=False, inplace=False, verify_integrity=False)
 final = pd.concat([CPS, df['SS_MTR']], axis = 1).fillna(0)
 final[['SS_MTR', 'peridnum']].to_csv('SS_MTR_constantfuture.csv', index = None)

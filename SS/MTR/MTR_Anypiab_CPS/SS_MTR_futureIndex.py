@@ -34,6 +34,8 @@ def get_LE(x, age, wages, adjustment):
 
 	'''
 	years_worked = age - (17 + x)
+	if years_worked < 0:
+		years_worked = 0
 	experience = np.arange(0, years_worked + 1)
 	experienceSquared = experience*experience
 	ones = np.ones(len(experience))
@@ -85,6 +87,7 @@ def LE_reg(CPS, plot = False):
 	return params
 
 adjustment = 500
+cwd = os.getcwd()
 wages = np.array(pd.read_csv('averagewages.csv')["Avg_Wage"]).astype(float) #Reads in a wage inflation vector
 wages = wages / wages[-1]
 CPS = pd.read_csv('CPS_SS.csv')
@@ -124,6 +127,8 @@ def get_txt(sex, age, experience, peridnum, LE):
 		entry:        string, a usable entry for the anypiab calcuator.
 
 	'''
+	if experience < 0:
+		experience = 0
 	counter = 0
 	#First line must contain a 9 letter identifier, their gender (0 or 1) and birthday year
 	line1 = "01{}{}0101{}".format(str(peridnum)[-9:], sex, 2014 - age)
@@ -156,14 +161,6 @@ CPS_laborforce['entries_adjusted'] = CPS_laborforce.apply(lambda x: get_txt(x['a
 
 CPS_laborforce['anypiabID'] = CPS_laborforce['peridnum'].apply(lambda row: str(row)[-9:])
 
-# pickled = CPS_laborforce.to_pickle("CPS.pickle")
-# pickled1 = CPS.to_pickle("CPS_full.pickle")
-
-# CPS = pd.read_pickle("CPS_full.pickle")
-# CPS_laborforce = pd.read_pickle("CPS.pickle")
-# CPS_laborforce['entries'].to_frame().to_csv('CPS_anypiab.pia', index = None, header= None)
-# CPS_laborforce = CPS_laborforce.iloc[:10]
-
 piab_id_list_adjusted = []
 SS_list_adjusted = []
 piab_id_list = []
@@ -174,7 +171,7 @@ SS_list = []
 for i,indiv in CPS_laborforce.iterrows():
 	thefile = open('CPS.pia', 'w')
 	thefile.write("%s\n" % indiv['entries'])
-	p = Popen('/home/parker/Documents/AEI/Benefits/SS/MTR/anypiab.exe', stdin = PIPE) #NOTE: no shell=True here
+	p = Popen(cwd +'/anypiab.exe', stdin = PIPE) #NOTE: no shell=True here
 	p.communicate('CPS')
 	results = open('output')
 
@@ -187,7 +184,7 @@ for i,indiv in CPS_laborforce.iterrows():
 for i,indiv in CPS_laborforce.iterrows():
 	thefile = open('CPS.pia', 'w')
 	thefile.write("%s\n" % indiv['entries_adjusted'])
-	p = Popen('/home/parker/Documents/AEI/Benefits/SS/MTR/anypiab.exe', stdin=PIPE)
+	p = Popen(cwd +'/anypiab.exe', stdin=PIPE)
 	p.communicate('CPS')
 	results = open('output')
 
@@ -202,13 +199,10 @@ df['ID'] = piab_id_list
 df_adjust['SS_adjust'] = SS_list_adjusted
 df_adjust['ID'] = piab_id_list_adjusted
 
-# df.to_csv(path_or_buf='SS.csv', sep=',', na_rep='0')
-# df_adjust.to_csv(path_or_buf='SS_adjust.csv', sep=',', na_rep='0')
-# df_adjust = df_adjust.ix[1:].reset_index()
 df.SS = df.SS.astype(float)
 df_adjust.SS_adjust = df_adjust.SS_adjust.astype(float)
 df = df.merge(df_adjust, on = "ID")
-df['SS_MTR'] = ((df['SS_adjust'] - df['SS']) / adjustment)*12.*13.
+df['SS_MTR'] = ((df.ix[1:,'SS_adjust'] - df['SS']) / adjustment)*12.*13.
 df = df.set_index('ID', drop=True, append=False, inplace=False, verify_integrity=False)
 final = pd.concat([CPS, df['SS_MTR']], axis = 1).fillna(0)
 final[['SS_MTR', 'peridnum']].to_csv('SS_MTR_futureindex.csv', index = None)

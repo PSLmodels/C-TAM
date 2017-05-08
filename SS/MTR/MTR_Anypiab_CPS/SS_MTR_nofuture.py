@@ -35,6 +35,9 @@ def get_LE(x, age, wages, adjustment):
 
 	'''
 	years_worked = age - (17 + x)
+	if years_worked < 0:
+		years_worked = 0
+
 	experience = np.arange(0, years_worked + 1)
 	experienceSquared = experience*experience
 	ones = np.ones(len(experience))
@@ -87,6 +90,7 @@ def LE_reg(CPS, plot = False):
 	return params
 
 adjustment = 500
+cwd = os.getcwd()
 wages = np.array(pd.read_csv('averagewages.csv')["Avg_Wage"]).astype(float)
 wages = wages / wages[-1]
 CPS = pd.read_csv('CPS_SS.csv')
@@ -126,6 +130,8 @@ def get_txt(sex, age, experience, peridnum, LE):
 		entry:        string, a usable entry for the anypiab calcuator.
 
 	'''
+	if experience < 0:
+		experience = 0
 	counter = 0
 	#First line must contain a 9 letter identifier, their gender (0 or 1) and birthday year
 	line1 = "01{}{}0101{}".format(str(peridnum)[-9:], sex, 2014 - age)
@@ -169,7 +175,7 @@ SS_list = []
 for i,indiv in CPS_laborforce.iterrows():
 	thefile = open('CPS.pia', 'w')
 	thefile.write("%s\n" % indiv['entries'])
-	p = Popen('/home/parker/Documents/AEI/Benefits/SS/MTR/anypiab.exe', stdin = PIPE) 
+	p = Popen(cwd +'/anypiab.exe', stdin = PIPE) 
 	p.communicate('CPS')
 	results = open('output')
 
@@ -182,7 +188,7 @@ for i,indiv in CPS_laborforce.iterrows():
 for i,indiv in CPS_laborforce.iterrows():
 	thefile = open('CPS.pia', 'w')
 	thefile.write("%s\n" % indiv['entries_adjusted'])
-	p = Popen('/home/parker/Documents/AEI/Benefits/SS/MTR/anypiab.exe', stdin=PIPE)
+	p = Popen(cwd +'/anypiab.exe', stdin=PIPE)
 	p.communicate('CPS')
 	results = open('output')
 
@@ -203,7 +209,7 @@ df = df.merge(df_adjust, on = "ID")
 # We subtract the new SS benefit amount (after the adjustment) by the old SS benefit
 # amount, then we divide by the adjusment. After we multipy by 12 then 13 to represent
 # the change in lifetime benefit for $1 earned
-df['SS_MTR'] = ((df['SS_adjust'] - df['SS']) / adjustment)*12.*13.
+df['SS_MTR'] = ((df.ix[1:,'SS_adjust'] - df['SS']) / adjustment)*12.*13.
 df = df.set_index('ID', drop=True, append=False, inplace=False, verify_integrity=False)
 final = pd.concat([CPS, df['SS_MTR']], axis = 1).fillna(0)
 final[['SS_MTR', 'peridnum']].to_csv('SS_MTR_nofuture.csv', index = None)
