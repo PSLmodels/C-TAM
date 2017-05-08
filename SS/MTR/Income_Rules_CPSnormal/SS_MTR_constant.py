@@ -8,11 +8,15 @@ import seaborn
 import statsmodels.formula.api as sm
 from statsmodels.api import add_constant
 import sys, os
-from subprocess import Popen, PIPE
 import pickle
 from scipy.interpolate import InterpolatedUnivariateSpline
 import subprocess
-
+from sklearn.ensemble  import RandomForestRegressor as Rf
+# Need to get bend points and averagewages
+# arma idea, bend points etc.
+# [TODO]: CPI index future benefit amounts, even after the first year of receiving them. Try
+# also to predict future bend points and use the appropriate ones. Use kalman filter with past years of
+# wage increases, bend point increases, max earnings increases, and CPI increases?
 # 1. AIME: the sum of 35 highest years of earnings
 # 2. 3 bend point calculations: given by each year. 
 # 3. Maximum earnings to be considered for SS calculation
@@ -27,13 +31,12 @@ here for SS anypiab calculator to calculate future earnings after the year
 Refer to SS_MTR_nofuture.py for a more detailed step-by-step documentation
 
 The differences between the three SS_MTR files are found in the functions
-get_LE, and get_txt  '''
+get_SS_MTR, and get_txt  '''
 
 
-
-def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_earnings, CPI,  boost_futurereg, earning,\
-		in1, in2, in3, in4, in5, in6, in7, in8, in9, in10, in12, in13, race_1, race_4,race_5 ,race_6 ,race_8,race_14, \
-		race_21 ,race_22, a_sex, age_child, child):
+def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_earnings, CPI, boost_futurereg, earning,\
+		in1, in2, in3, in4, in5, in6, in7, in8, in9, in10, in11, in12, in13, AI_HP_in, Asian_only,\
+		 Black_AI_Asian, Hawaiian_in, White_only, a_sex, age_child, child):
 	'''
 	Creates the Lifetime Earnings vector with and without adjustment
 
@@ -53,7 +56,7 @@ def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_e
 		years_worked = 0
 	years_to_work = 65 - (17 + YrsPstHS) #maybe 64
 
-	start_yr = sim_year - years_worked
+	start_yr = 2014 - years_worked
 	end_yr = start_yr + years_to_work
 
 	# ---- Creating index for pre-retirment earnings. We don't increase index before 2014 because we use 2014 earnings
@@ -63,7 +66,7 @@ def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_e
 	wages = np.append(wages, np.ones(6) * wages[-1])
 
 	# -----Creating regression variables
-	experience = np.arange(0, years_to_work + 1)
+	experience = np.arange(0, years_worked + 1)
 	experienceSquared = experience*experience
 	ones = np.ones(len(experience))
 	educ_level = ones * Reg_YrsPstHS
@@ -78,16 +81,14 @@ def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_e
 	industry8 = ones * in8
 	industry9 = ones * in9
 	industry10 = ones * in10
+	industry11 = ones * in11
 	industry12 = ones * in12
 	industry13 = ones * in13
-	race1 = ones * race_1
-	race4 = ones * race_4
-	race5 = ones * race_5
-	race6 = ones * race_6
-	race8 = ones * race_8
-	race14 = ones * race_14
-	race21 = ones * race_21
-	race22 = ones * race_22
+	AI_HP = ones * AI_HP_in
+	Asian = ones * Asian_only
+	Black_AI = ones * Black_AI_Asian
+	Hawaiian = ones * Hawaiian_in
+	White = ones * White_only
 
 	child = np.ones(len(experience))
 
@@ -100,36 +101,36 @@ def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_e
 	gender_child = a_sex * child
 
 	LE = np.exp(
-	    ones * params[0] + educ_level * params[1] + experience * params[2] + experienceSquared * params[3]
-	    + gender * params[4] + child * params[5] + gender_child * params[6] + industry1 * params[7]
-	    + industry2 * params[8] + industry3 * params[9] + industry4 * params[10] + industry5 * params[11]
-	    + industry6 * params[12] + industry7 * params[13] + industry8 * params[14] + industry9 * params[15]
-	    + industry10 * params[16] + industry12 * params[17] + industry13 * params[18] + race1 * params[19]
-	    + race4 * params[20] + race5 * params[21] + race6 * params[22] + race8 * params[23] + race14 * params[24]
-	    + race21 * params[25] + race22 * params[26]).astype(int)
+	     educ_level * params[0] + experience * params[1] + experienceSquared * params[2]
+	    + gender * params[3] + child * params[4] + gender_child * params[5] + industry1 * params[6]
+	    + industry2 * params[7] + industry3 * params[8] + industry4 * params[9] + industry5 * params[10]
+	    + industry6 * params[11] + industry7 * params[12] + industry8 * params[13] + industry9 * params[14]
+	    + industry10 * params[15] + industry11 * params[16] + industry12 * params[17] + industry13 * params[18]
+	    + AI_HP * params[19] + Asian * params[20] + Black_AI * params[21] + Hawaiian * params[22] + White * params[23]).astype(int)
 
 	if len(LE) == 0:
-		pass
-	
+		LE = np.append(LE, np.zeros((years_to_work - years_worked))).astype(int)
 	else:
+		LE = np.append(LE, (np.ones((years_to_work - years_worked)) * LE[-1])).astype(int)
 		LE = (LE * boost_futurereg[63-years_worked:64+(years_to_work - years_worked)]).astype(int)
 		scale = earning / LE[years_worked]
 		LE = LE * scale
 		LE = (LE * wages[63-years_worked:64+(years_to_work - years_worked)]).astype(int)
-	
+
 	LE_adjusted = LE.copy()
 	
 	max_earnings_use = max_earnings.loc[(max_earnings['Year'] >= start_yr) & (max_earnings['Year'] <= end_yr), 'Max_Earnings']
-
+	
 	within_threshold = False
-	# ---------Max earnings check--------------
+	
+	# --------Max earnings check-------------
 	if LE[years_worked] > max_earnings.loc[max_earnings['Year'] == sim_year, 'Max_Earnings'].values - adjustment:
 		within_threshold = True
 	if within_threshold == True: #If within max earnings threshold, make current earnings equal to max earnings
 		LE_adjusted[years_worked] = max_earnings.loc[max_earnings['Year'] == sim_year, 'Max_Earnings'].values
 	else:
 		LE_adjusted[years_worked] += adjustment # Else, add the adjustment
-	
+
 	LE = np.where(LE > max_earnings_use, max_earnings_use, LE) #Correcting for max earnings threshold for all years
 	LE_adjusted = np.where(LE_adjusted > max_earnings_use, max_earnings_use, LE_adjusted)
 
@@ -187,7 +188,7 @@ def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_e
 	LE_adjusted = -top35[:35]
 
 	if (np.sum(LE_adjusted) / (35.* 12) - int(np.sum(LE_adjusted) / (35.* 12))) >= .9999: # Correcting round-down errors from int(.)
-		AIME_after = np.sum(LE_adjusted) / (35.* 12)
+		AIME_after= np.sum(LE_adjusted) / (35.* 12)
 	else: # Correcting round-down errors from int(.)
 		AIME_after = int(np.sum(LE_adjusted) / (35.* 12))
 	PIA_after = 0
@@ -254,7 +255,6 @@ def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_e
 
 	return SS_MTR
 
-
 def LE_reg(CPS, plot = False):
 	'''
 	Uses a linear regression to approximate coefficient to Mincer's earnings equation 
@@ -267,13 +267,14 @@ def LE_reg(CPS, plot = False):
 	
 	sample = CPS.copy()[
 
-	    (CPS['a_age'] > 16) & (CPS['a_age'] < 66) & (CPS['a_ftpt'] == 0) & (CPS['earned_income'] > 0)]
+	    (CPS['a_age'] > 16) & (CPS['a_age'] < 66) & (CPS['a_ftpt'] == str(0.0)) & (CPS['earned_income'] > 0)]
 
 	earned_income = sample['earned_income']
-	sample['const'] = 1.
-	indep_vars = ['const', 'Reg_YrsPstHS', 'experience', 'experienceSquared', 'a_sex', 'child', 'a_sex_child',\
-	             '1.0', '2.0', '3.0', '4.0', '5.0','6.0', '7.0', '8.0', '9.0', '10.0','12.0', '13.0',
-	             'race_1.0' , 'race_4.0','race_5.0' ,'race_6.0' ,'race_8.0','race_14.0', 'race_21.0' ,'race_22.0']
+	indep_vars = ['Reg_YrsPstHS', 'experience', 'experienceSquared', 'a_sex', 'child', 'a_sex_child',
+		             'Agriculture, forestry,', 'Construction', 'Educational and health services', 'Financial activities',
+		             'Information', 'Leisure and hospitality', 'Manufacturing', 'Mining', 'Other services','Professional and business',
+		             'Public administration', 'Transportation and utilities', 'Wholesale and retail trade',
+		              'AI-HP','Asian only','Black-AI-Asian', 'Hawaiian/Pacific Islander','White only']
 
 	X = sample[indep_vars]
 	model = sm.OLS(np.log(sample['earned_income']), X)
@@ -296,8 +297,8 @@ def LE_reg(CPS, plot = False):
 		plt.show()
 	return params
 
-sim_year = 2014
 adjustment = 500
+sim_year = 2014
 
 bendpoints = pd.read_csv('Bendpoints.csv', dtype = {"Year": np.int32, "Bend_pt1": np.int32, "Bend_pt2": np.int32})
 max_earnings = pd.read_csv('Max_Earnings.csv', dtype = {"Year": np.int32, "Max_Earnings": np.float64})
@@ -308,87 +309,60 @@ CPI = pd.read_csv('CPI_Intermediate.csv', dtype = {"Year": np.int32, "Max_Earnin
 wages.loc[wages['Year'] < sim_year, 'Avg_Wage'] = wages.loc[wages['Year'] == sim_year, 'Avg_Wage'].values[0]
 boost_futurereg = wages['Avg_Wage'].values / wages['Avg_Wage'][wages['Year'] == sim_year].values[0] 
 
-CPS = pd.read_csv('cpsrets_age_fix.csv')
-CPS = CPS[[ 'AGEH' ,'AGES' ,'WAS', 'WASS','BIL_HEAD' ,'BIL_SPOUSE', 'FIL_HEAD', 'FIL_SPOUSE',\
-	 	'HGA_HEAD', 'HGA_SPOUSE', 'FTPT_HEAD', 'FTPT_SPOUSE', 'FAMREL_HEAD','FAMREL_SPOUSE', \
-	 	'MJIND_SPOUSE', 'MJIND_HEAD','CPSSEQ', 'WT','h_seq', 'GENDER_HEAD', 'GENDER_SPOUSE', \
-	 	'RACE_HEAD', 'RACE_SPOUSE']].fillna(0)
 
-CPS['earned_income_spouse'] = CPS[['WASS','BIL_SPOUSE','FIL_SPOUSE']].sum(axis = 1)
-CPS['earned_income_head'] = CPS[['WAS','BIL_HEAD','FIL_HEAD']].sum(axis = 1)
-CPS_before = CPS.copy()
-CPS_spouse = CPS[['earned_income_spouse','AGES', 'HGA_SPOUSE', 'FTPT_SPOUSE', 'FAMREL_SPOUSE',\
-	 'MJIND_SPOUSE', 'CPSSEQ','WT', 'h_seq', 'GENDER_SPOUSE', 'RACE_SPOUSE']][CPS.AGES != 0].copy()
-CPS_spouse.columns = ['earned_income','a_age', 'a_hga', 'a_ftpt', 'a_famrel', 'a_mjind','CPSSEQ',\
-	'wt', 'fh_seq', 'a_sex', 'prdtrace']
-CPS_head = CPS[['earned_income_head','AGEH', 'HGA_HEAD', 'FTPT_HEAD', 'FAMREL_HEAD', 'MJIND_HEAD',\
-	 'CPSSEQ','WT', 'h_seq', 'GENDER_HEAD', "RACE_HEAD"]].copy()
-CPS_head.columns = ['earned_income','a_age', 'a_hga', 'a_ftpt', 'a_famrel', 'a_mjind','CPSSEQ','wt',\
-	 'fh_seq', 'a_sex', 'prdtrace']
-CPS = pd.concat([CPS_head, CPS_spouse], axis = 0).reset_index()
+CPS = pd.read_csv('CPS_SS.csv')
 CPS['a_age'] = CPS['a_age'].astype(int)
 CPS['a_mjind'] = CPS['a_mjind'].astype(str)
 dummies = pd.get_dummies(CPS['a_mjind'], drop_first=True)
 CPS = pd.concat([CPS, dummies], axis=1)
 
-df = pd.Series([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 5, 7, 11, 11], \
-index=[0,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46])
+df = pd.Series([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 5, 7, 11, 11], \
+	index=["Children", "Less than 1st grade", "1st,2nd,3rd,or 4th grade",\
+	"5th or 6th grade", "7th and 8th grade", "9th grade",\
+	"10th grade", "11th grade", "12th grade no diploma",\
+	"High school graduate - high", "Some college but no degree",\
+	"Associate degree in college -",\
+	"Bachelor's degree (for", "Master's degree (for", "Professional school degree (for",\
+	"Doctorate degree (for"])
 CPS['Reg_YrsPstHS'] = CPS['a_hga'].map(df)
 
-# 0: Children
-# 31: Less than 1st grade
-# 32: 1st,2nd,3rd,or 4th grade
-# 33: 5th or 6th grade
-# 34: 7th and 8th grade
-# 35: 9th grade
-# 36: 10th grade 
-# 37: 11th grade 
-# 38: 12th grade no diploma
-# 39: High school graduate - high 
-# 40: Some college but no degree 
-# 41: associates degree - occupational/vocational training
-# 42: associates degree - academic program
-# 43: bachelor's degree
-# 44: master's degree
-# 45: professional degree
-# 46: doctorate
-
-df = pd.Series([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4, 7, 10, 10], \
-index=[0,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46])
+df = pd.Series([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4, 7, 10, 10], \
+	index=["Children", "Less than 1st grade", "1st,2nd,3rd,or 4th grade",\
+	"5th or 6th grade", "7th and 8th grade", "9th grade",\
+	"10th grade", "11th grade", "12th grade no diploma",\
+	"High school graduate - high", "Some college but no degree",\
+	"Associate degree in college -",\
+	"Bachelor's degree (for", "Master's degree (for", "Professional school degree (for",\
+	"Doctorate degree (for"])
 CPS['YrsPstHS'] = CPS['a_hga'].map(df)
 CPS_child = CPS[CPS['a_famrel'] == 1]
 CPS = CPS.join(CPS_child.groupby('fh_seq')['a_age'].max(), on='fh_seq', rsuffix='_child')
 CPS['a_age_child'] = CPS['a_age_child'].fillna(99)
 CPS['child'] = np.where(CPS['a_age_child'] == 99, 0, 1)
-
 CPS['experience'] = CPS['a_age'] - CPS['YrsPstHS'] - 17  
 CPS.loc[CPS['experience'] < 0, 'experience'] = 1
 CPS['experienceSquared'] = CPS['experience'] * CPS['experience']
-CPS.loc[:, 'prdtrace'] = 'race_' + CPS.loc[:, 'prdtrace'].astype(str)
-dummies = pd.get_dummies(CPS['prdtrace'], drop_first=False)
+dummies = pd.get_dummies(CPS['prdtrace'], drop_first=True)
 CPS = pd.concat([CPS, dummies], axis=1)
+
 
 CPS['a_sex_child'] = CPS['a_sex'] * CPS['child']
 
-# RF_reg(CPS, plot = True)
 params = LE_reg(CPS)
 
 CPS['SS_MTR'] = 0
-CPS_laborforce = CPS[(CPS['a_age'] >17) & (CPS['a_age'] < 66) & (CPS['a_ftpt'] == 0) & (CPS['earned_income'] > 0)]
-# CPS_laborforce = CPS_laborforce.loc[[21,25],:]
-# CPS_laborforce.to_pickle('use.pickle')
-# CPS_laborforce = CPS_laborforce.iloc[:10]
-# CPS_laborforce = pd.read_pickle('use.pickle')
+CPS_laborforce = CPS[(CPS['a_age'] >17) & (CPS['a_age'] < 66) & (CPS['a_ftpt'] == str(0.0)) & (CPS['earned_income'] > 0)]
+
 CPS_laborforce['SS_MTR'] = CPS_laborforce.apply(lambda x: get_SS_MTR(x['YrsPstHS'], x['Reg_YrsPstHS'], x['a_age'],\
-	 wages, adjustment, bendpoints, max_earnings, CPI,  boost_futurereg, x['earned_income'],\
-	 x['1.0'] , x['2.0'],x['3.0'],x['4.0'],x['5.0'],x['6.0'],x['7.0'],x['8.0'],x['9.0'],x['10.0'],x['12.0'], \
-	 x['13.0'], x['race_1.0'] , x['race_4.0'],x['race_5.0'] ,x['race_6.0'] ,x['race_8.0'],x['race_14.0'], \
-	 x['race_21.0'] ,x['race_22.0'], x['a_sex'], x['a_age_child'], x['child']), axis=1)
+	 wages, adjustment, bendpoints, max_earnings, CPI, boost_futurereg, x['earned_income'],
+	 x['Agriculture, forestry,'], x['Construction'], x['Educational and health services'],
+     x['Financial activities'], x['Information'], x['Leisure and hospitality'],
+     x['Manufacturing'], x['Mining'], x['Other services'],x['Professional and business'],
+     x['Public administration'], x['Transportation and utilities'],
+     x['Wholesale and retail trade'], x['AI-HP'], x['Asian only'], x['Black-AI-Asian'], 
+     x['Hawaiian/Pacific Islander'], x['White only'], x['a_sex'], x['a_age_child'], x['child']), axis=1)
 
 
-both = pd.concat([CPS, CPS_laborforce[["SS_MTR"]]], axis = 1).fillna(0)
-heads = both.iloc[:len(CPS_before['AGEH'])]
-spouses = both.iloc[len(CPS_before['AGEH']):]
-final = heads.merge(spouses,how = 'left', suffixes = ('_head', '_spouse'), on = 'CPSSEQ').fillna(0)
-final[['SS_MTR_head', 'SS_MTR_spouse', 'earned_income_head' , 'earned_income_spouse', 'CPSSEQ']].to_csv('SS_MTR_FutureReg_RETS_age_fixed.csv', index = None)
 
+final = pd.concat([CPS, CPS_laborforce["SS_MTR"]], axis = 1).fillna(0)
+final[['SS_MTR', 'peridnum', 'earned_income']].to_csv('SS_MTR_ConstantFuture.csv', index = None)

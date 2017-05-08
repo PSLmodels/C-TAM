@@ -8,20 +8,16 @@ import seaborn
 import statsmodels.formula.api as sm
 from statsmodels.api import add_constant
 import sys, os
+from subprocess import Popen, PIPE
 import pickle
 from scipy.interpolate import InterpolatedUnivariateSpline
 import subprocess
-from sklearn.ensemble  import RandomForestRegressor as Rf
-# Need to get bend points and averagewages
-# arma idea, bend points etc.
-# [TODO]: CPI index future benefit amounts, even after the first year of receiving them. Try
-# also to predict future bend points and use the appropriate ones. Use kalman filter with past years of
-# wage increases, bend point increases, max earnings increases, and CPI increases?
+
+# [TODO]: add both constant, and constant indexed
 # 1. AIME: the sum of 35 highest years of earnings
 # 2. 3 bend point calculations: given by each year. 
 # 3. Maximum earnings to be considered for SS calculation
 # 4. Must have at least 10 years of earnings to qualify
-# 5. (I will fix the lifetime earnings vector, and incorporate the new regression model and maybe try random forests if that's okay with you)
 # 6. I should index past and future earnings by SS index vector
 '''This script calculates the Social Security Marginal Tax Rates for 
 individuals in the 2014 CPS. We use our regression to calculate future earnings 
@@ -33,8 +29,7 @@ Refer to SS_MTR_nofuture.py for a more detailed step-by-step documentation
 The differences between the three SS_MTR files are found in the functions
 get_SS_MTR, and get_txt  '''
 
-
-def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_earnings, CPI, boost_futurereg, earning,\
+def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, adjustment, bendpoints, max_earnings, earning,\
 		in1, in2, in3, in4, in5, in6, in7, in8, in9, in10, in11, in12, in13, AI_HP_in, Asian_only,\
 		 Black_AI_Asian, Hawaiian_in, White_only, a_sex, age_child, child):
 	'''
@@ -54,19 +49,13 @@ def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_e
 
 	if years_worked < 0:
 		years_worked = 0
-	years_to_work = 65 - (17 + YrsPstHS) #maybe 64
+	years_to_work = 65 - (17 + YrsPstHS) 
 
-	start_yr = 2014 - years_worked
+	start_yr = sim_year - years_worked
 	end_yr = start_yr + years_to_work
 
-	# ---- Creating index for pre-retirment earnings. We don't increase index before 2014 because we use 2014 earnings
-	index = wages.loc[wages['Year'] == end_yr - 6].index.values
-	wages = wages.loc[wages['Year'] == end_yr - 6, 'Avg_Wage'].values[0] / wages['Avg_Wage'].values
-	wages = wages[: index+1]
-	wages = np.append(wages, np.ones(6) * wages[-1])
-
 	# -----Creating regression variables
-	experience = np.arange(0, years_worked + 1)
+	experience = np.arange(0, years_to_work + 1)
 	experienceSquared = experience*experience
 	ones = np.ones(len(experience))
 	educ_level = ones * Reg_YrsPstHS
@@ -101,36 +90,32 @@ def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_e
 	gender_child = a_sex * child
 
 	LE = np.exp(
-	     educ_level * params[0] + experience * params[1] + experienceSquared * params[2]
-	    + gender * params[3] + child * params[4] + gender_child * params[5] + industry1 * params[6]
-	    + industry2 * params[7] + industry3 * params[8] + industry4 * params[9] + industry5 * params[10]
-	    + industry6 * params[11] + industry7 * params[12] + industry8 * params[13] + industry9 * params[14]
-	    + industry10 * params[15] + industry11 * params[16] + industry12 * params[17] + industry13 * params[18]
-	    + AI_HP * params[19] + Asian * params[20] + Black_AI * params[21] + Hawaiian * params[22] + White * params[23]).astype(int)
-
+		     educ_level * params[0] + experience * params[1] + experienceSquared * params[2]
+		    + gender * params[3] + child * params[4] + gender_child * params[5] + industry1 * params[6]
+		    + industry2 * params[7] + industry3 * params[8] + industry4 * params[9] + industry5 * params[10]
+		    + industry6 * params[11] + industry7 * params[12] + industry8 * params[13] + industry9 * params[14]
+		    + industry10 * params[15] + industry11 * params[16] + industry12 * params[17] + industry13 * params[18]
+		    + AI_HP * params[19] + Asian * params[20] + Black_AI * params[21] + Hawaiian * params[22] + White * params[23]).astype(int)
 	if len(LE) == 0:
-		LE = np.append(LE, np.zeros((years_to_work - years_worked))).astype(int)
+		pass
+	
 	else:
-		LE = np.append(LE, (np.ones((years_to_work - years_worked)) * LE[-1])).astype(int)
-		LE = (LE * boost_futurereg[63-years_worked:64+(years_to_work - years_worked)]).astype(int)
 		scale = earning / LE[years_worked]
 		LE = LE * scale
-		LE = (LE * wages[63-years_worked:64+(years_to_work - years_worked)]).astype(int)
-
+	
 	LE_adjusted = LE.copy()
 	
 	max_earnings_use = max_earnings.loc[(max_earnings['Year'] >= start_yr) & (max_earnings['Year'] <= end_yr), 'Max_Earnings']
-	
+
 	within_threshold = False
-	
-	# --------Max earnings check-------------
+	# ---------Max earnings check--------------
 	if LE[years_worked] > max_earnings.loc[max_earnings['Year'] == sim_year, 'Max_Earnings'].values - adjustment:
 		within_threshold = True
 	if within_threshold == True: #If within max earnings threshold, make current earnings equal to max earnings
 		LE_adjusted[years_worked] = max_earnings.loc[max_earnings['Year'] == sim_year, 'Max_Earnings'].values
 	else:
 		LE_adjusted[years_worked] += adjustment # Else, add the adjustment
-
+	
 	LE = np.where(LE > max_earnings_use, max_earnings_use, LE) #Correcting for max earnings threshold for all years
 	LE_adjusted = np.where(LE_adjusted > max_earnings_use, max_earnings_use, LE_adjusted)
 
@@ -188,7 +173,7 @@ def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_e
 	LE_adjusted = -top35[:35]
 
 	if (np.sum(LE_adjusted) / (35.* 12) - int(np.sum(LE_adjusted) / (35.* 12))) >= .9999: # Correcting round-down errors from int(.)
-		AIME_after= np.sum(LE_adjusted) / (35.* 12)
+		AIME_after = np.sum(LE_adjusted) / (35.* 12)
 	else: # Correcting round-down errors from int(.)
 		AIME_after = int(np.sum(LE_adjusted) / (35.* 12))
 	PIA_after = 0
@@ -219,33 +204,9 @@ def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_e
 	else :
 		PIA_after += AIME_after * .15
 
-	# ------CPI adjustment for benefit--------
+	PIA *= 13 * 12
 
-	# Adjusting for years after 62 years old (default retirement)
-	adjust_from = end_yr - 4
-	CPI_adjust = CPI.loc[(CPI['Year'] >= adjust_from) & (CPI['Year'] < adjust_from + 4), "CPI"].as_matrix()
-	CPI_adjust_scale = np.prod(CPI_adjust)
-
-	# Adjusting the benefit amount upon retirement (65) 
-
-	PIA *= CPI_adjust_scale
-	PIA_after *= CPI_adjust_scale
-
-	# Adjusting all benefit amounts after retirment year, up to death (78) for pre-adjustment PIA
-	PIA_vec = np.ones(13) * CPI.loc[(CPI['Year'] >= end_yr) & (CPI['Year'] < end_yr + 13), 'CPI'].values
-	PIA_vec[0] = PIA
-	PIA_vec = np.cumprod(PIA_vec) * 12.
-	#Rounding like in the calculator
-	# PIA_vec = np.floor(PIA_vec * 10) / 10.
-	PIA = np.sum(PIA_vec)
-
-	# Adjusting all benefit amounts after retirment year, up to death (78) for post-adjustment PIA
-	PIA_vec_after = np.ones(13) * CPI.loc[(CPI['Year'] >= end_yr) & (CPI['Year'] < end_yr + 13), 'CPI'].values
-	PIA_vec_after[0] = PIA_after
-	PIA_vec_after = np.cumprod(PIA_vec_after) * 12.
-	#Rounding like in the calculator
-	# PIA_vec_after = np.floor(PIA_vec_after * 10) / 10.
-	PIA_after = np.sum(PIA_vec_after)
+	PIA_after *= 13 * 12
 
 	# Taking different between pre- and post-adjustment PIA and dividing by adjustment for MTR
 	SS_MTR = ((PIA_after - PIA) / adjustment)
@@ -254,6 +215,7 @@ def get_SS_MTR(YrsPstHS, Reg_YrsPstHS, age, wages, adjustment, bendpoints, max_e
 		SS_MTR = 0
 
 	return SS_MTR
+
 
 def LE_reg(CPS, plot = False):
 	'''
@@ -271,10 +233,10 @@ def LE_reg(CPS, plot = False):
 
 	earned_income = sample['earned_income']
 	indep_vars = ['Reg_YrsPstHS', 'experience', 'experienceSquared', 'a_sex', 'child', 'a_sex_child',
-		             'Agriculture, forestry,', 'Construction', 'Educational and health services', 'Financial activities',
-		             'Information', 'Leisure and hospitality', 'Manufacturing', 'Mining', 'Other services','Professional and business',
-		             'Public administration', 'Transportation and utilities', 'Wholesale and retail trade',
-		              'AI-HP','Asian only','Black-AI-Asian', 'Hawaiian/Pacific Islander','White only']
+	             'Agriculture, forestry,', 'Construction', 'Educational and health services', 'Financial activities',
+	             'Information', 'Leisure and hospitality', 'Manufacturing', 'Mining', 'Other services','Professional and business',
+	             'Public administration', 'Transportation and utilities', 'Wholesale and retail trade',
+	              'AI-HP','Asian only','Black-AI-Asian', 'Hawaiian/Pacific Islander','White only']
 
 	X = sample[indep_vars]
 	model = sm.OLS(np.log(sample['earned_income']), X)
@@ -300,15 +262,9 @@ def LE_reg(CPS, plot = False):
 adjustment = 500
 sim_year = 2014
 
-bendpoints = pd.read_csv('Bendpoints.csv', dtype = {"Year": np.int32, "Bend_pt1": np.int32, "Bend_pt2": np.int32})
-max_earnings = pd.read_csv('Max_Earnings.csv', dtype = {"Year": np.int32, "Max_Earnings": np.float64})
-wages = pd.read_csv('averagewages.csv', dtype = {"Year": np.int32, "Avg_Wage": np.float64})
-CPI = pd.read_csv('CPI_Intermediate.csv', dtype = {"Year": np.int32, "Max_Earnings": np.float64})
-    # Below makes it so the earnings calculated via the regression (in 2014 terms) for previous years 
-	# are indexed in 2014 terms later
-wages.loc[wages['Year'] < sim_year, 'Avg_Wage'] = wages.loc[wages['Year'] == sim_year, 'Avg_Wage'].values[0]
-boost_futurereg = wages['Avg_Wage'].values / wages['Avg_Wage'][wages['Year'] == sim_year].values[0] 
-
+bendpoints = pd.read_csv('Bendpoints_noindex.csv', dtype = {"Year": np.int32, "Bend_pt1": np.int32, "Bend_pt2": np.int32})
+max_earnings = pd.read_csv('Max_Earnings_noindex.csv', dtype = {"Year": np.int32, "Max_Earnings": np.float64})
+	
 
 CPS = pd.read_csv('CPS_SS.csv')
 CPS['a_age'] = CPS['a_age'].astype(int)
@@ -342,7 +298,6 @@ CPS['child'] = np.where(CPS['a_age_child'] == 99, 0, 1)
 CPS['experience'] = CPS['a_age'] - CPS['YrsPstHS'] - 17  
 CPS.loc[CPS['experience'] < 0, 'experience'] = 1
 CPS['experienceSquared'] = CPS['experience'] * CPS['experience']
-# CPS['prdtrace'] = np.where(CPS['prdtrace'] == "White only", 1, 0)
 dummies = pd.get_dummies(CPS['prdtrace'], drop_first=True)
 CPS = pd.concat([CPS, dummies], axis=1)
 
@@ -353,20 +308,20 @@ params = LE_reg(CPS)
 
 CPS['SS_MTR'] = 0
 CPS_laborforce = CPS[(CPS['a_age'] >17) & (CPS['a_age'] < 66) & (CPS['a_ftpt'] == str(0.0)) & (CPS['earned_income'] > 0)]
-# CPS_laborforce = CPS_laborforce.loc[[60, 2],:]
-# CPS_laborforce.to_pickle('use.pickle')
-# CPS_laborforce = CPS_laborforce.iloc[:10]
-# CPS_laborforce = pd.read_pickle('use.pickle')
+
 CPS_laborforce['SS_MTR'] = CPS_laborforce.apply(lambda x: get_SS_MTR(x['YrsPstHS'], x['Reg_YrsPstHS'], x['a_age'],\
-	 wages, adjustment, bendpoints, max_earnings, CPI, boost_futurereg, x['earned_income'],
+	 adjustment, bendpoints, max_earnings, x['earned_income'],
 	 x['Agriculture, forestry,'], x['Construction'], x['Educational and health services'],
      x['Financial activities'], x['Information'], x['Leisure and hospitality'],
      x['Manufacturing'], x['Mining'], x['Other services'],x['Professional and business'],
      x['Public administration'], x['Transportation and utilities'],
-     x['Wholesale and retail trade'], x['AI-HP'], x['Asian only'], x['Black-AI-Asian'], 
+     x['Wholesale and retail trade'],  x['AI-HP'], x['Asian only'], x['Black-AI-Asian'], 
      x['Hawaiian/Pacific Islander'], x['White only'], x['a_sex'], x['a_age_child'], x['child']), axis=1)
 
 
 
 final = pd.concat([CPS, CPS_laborforce["SS_MTR"]], axis = 1).fillna(0)
-final[['SS_MTR', 'peridnum', 'earned_income']].to_csv('SS_MTR_ConstantFuture.csv', index = None)
+final[['SS_MTR', 'peridnum', 'earned_income']].to_csv('SS_MTR_FutureReg_noindex.csv', index = None)
+
+# The 6 different types of MTR values are due to rounding errors (since the calculator rounds up 
+# 	or down)

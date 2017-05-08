@@ -529,10 +529,7 @@ params = LE_reg(CPS)
 
 CPS['SS_MTR'] = 0
 CPS_laborforce = CPS[(CPS['a_age'] >17) & (CPS['a_age'] < 66) & (CPS['a_ftpt'] == 0) & (CPS['earned_income'] > 0)]
-# CPS_laborforce = CPS_laborforce.loc[[21,25],:]
-# CPS_laborforce.to_pickle('use.pickle')
-# CPS_laborforce = CPS_laborforce.iloc[:10]
-# CPS_laborforce = pd.read_pickle('use.pickle')
+
 CPS_laborforce['SS_MTR'] = CPS_laborforce.apply(lambda x: get_SS_MTR(x['YrsPstHS'], x['Reg_YrsPstHS'], x['a_age'],\
 	 wages, adjustment, bendpoints, max_earnings, CPI,  boost_futurereg, x['earned_income'],\
 	 x['1.0'] , x['2.0'],x['3.0'],x['4.0'],x['5.0'],x['6.0'],x['7.0'],x['8.0'],x['9.0'],x['10.0'],x['12.0'], \
@@ -549,6 +546,5 @@ both = pd.concat([CPS, CPS_laborforce[["SS_MTR", 'AIME']]], axis = 1).fillna(0)
 heads = both.iloc[:len(CPS_before['AGEH'])]
 spouses = both.iloc[len(CPS_before['AGEH']):]
 final = heads.merge(spouses,how = 'left', suffixes = ('_head', '_spouse'), on = 'CPSSEQ').fillna(0)
-# print final[['SS_MTR_head', 'SS_MTR_spouse', 'earned_income_head' , 'earned_income_spouse', 'CPSSEQ', 'AIME_head', 'AIME_spouse']]
 final[['SS_MTR_head', 'SS_MTR_spouse', 'earned_income_head' , 'earned_income_spouse', 'CPSSEQ', 'AIME_head', 'AIME_spouse']].to_csv('SS_MTR_ConstantFuture_RETS_age_fixed.csv', index = None)
 
