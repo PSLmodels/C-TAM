@@ -9,11 +9,14 @@ Description:
 This script generates imputed recipients to receive Social Security Benefits 
 to match the CPS 2014 March totals with SSA December 2014 totals. 
 
-
 Output:
-The output comes in 2 csv files: 
-	1. ByState.csv, which summarizes the results for each state
-	2. Imputed_combined.csv, which gives individual-level output similiar to CPS, but with imputations for ss_val
+The output comes in 2 csv files:
+    1. ByState.csv, which summarizes the results for each state
+    2. SS_augmentation.csv, which has the ID for each individual (PERIDNUM), their imputed/actual SS received,
+       and a number indicating Social Security participation status:
+       0 - Not Participating
+       1 - Original Recipient
+       2 - Imputed Recipient
 
 
 Functions:
@@ -43,7 +46,18 @@ def read_data():
 	return cps_alldata, ssa_data, disabled_average, retire_average
 
 def addnewvars(cps_alldata):
-
+    """
+    We create 4 binary (0 or 1) variables to use in the regression:
+        1. ss_indicator (Dependent variable): Indicates whether or not the individual in the CPS had received
+        Social Security benefits (ss_yn or sskid_yn was “Yes”)
+        2. disabled_yn: CPS variable was dis_hp was “Yes”. 1-disabled, 0-not diabled
+        3. aged_yn: CPS variable a_aged was greater than 65. 1-aged, 0-not aged
+        4. widowed_yn = CPS variable a_marital indicated 'widowed'. 1-widowed, 0-anything else
+        
+    Note: Because the variable a_age had categories for ’80-84 years of age’ and ‘85+ years of age’ we assigned
+        all of those between 80-84 a random uniformly distributed age and assumed everybody in the 85+ category
+        to be exactly 85 years. 
+    """
 	cps_alldata = cps_alldata.replace({"None or not in universe" : 0.}, regex=True)
 	cps_alldata['ss_val'] = cps_alldata['ss_val'].astype(float)
 	cps_alldata['ss_wtt'] = cps_alldata['marsupwt']*cps_alldata['ss_val']
@@ -76,7 +90,8 @@ def addnewvars(cps_alldata):
 	cps_alldata['Widowed_yn'] = 0
 	condition = cps_alldata['a_maritl'] == 'Widowed'
 	cps_alldata.loc[condition, 'Widowed_yn'] = 1
-
+    
+    # added other welfare program indicators
 	cps_alldata['ssi_yn'] = np.where(cps_alldata['ssi_yn'] == 'Yes', 1, 0)
 	cps_alldata['wc_yn'] = np.where(cps_alldata['wc_yn'] == 'Yes', 1, 0)
 	cps_alldata['uc_yn'] = np.where(cps_alldata['uc_yn'] == 'Yes', 1, 0)
@@ -151,6 +166,7 @@ def impute(cps_alldata, ssa_data):
 
 	#Imputing benefits
 	imputed = pd.DataFrame(columns = cps_recipients.columns.values)
+	nonimputed = pd.DataFrame(columns = cps_recipients.columns.values)
 	avemonbensimputed = []
 
 	for state in ssa_data.index:
@@ -178,27 +194,28 @@ def impute(cps_alldata, ssa_data):
 			imputed_state['ss_val'] = imputed_state['benefit_to_impute'] * 12
 			imputed_state['ss_wtt'] = imputed_state['marsupwt']*imputed_state['ss_val']
 			imputed = imputed.append(imputed_state)
+			nonimputed = nonimputed.append(nonimputed_state)
 			avemonbensimputed.append(-combined_data.loc[state,'ben_diff']/imputed_state['marsupwt'].sum())
 
-
+    #Assigning the categorical variable for participation
+    cps_recipients['Participation'] = 1
+    imputed['Participation'] = 2
+    nonimputed['Participation'] = 0
+        
 	#Combining the imputed recipients with cps recipients
 	imputed_combined = cps_recipients.append(imputed)
 	total_before_adjustment = (imputed_combined.ss_val * imputed_combined.marsupwt).sum()
-	print total_before_adjustment
 	ratio = []
 	imputed_combined['ss_val'] = imputed_combined['ss_val'] * AveBen2014_MonthlySSA * 12/total_before_adjustment
 
 	#Getting final results and exporting to csv
 	imputed_grouped = imputed_combined.groupby('State').sum()
-        #combined_data.columns = ['CPS Weighted Recipients', 'CPS Benefit per Recipient', 'Weighted Benefits', 'SSA_Recipients',\
-	# 						 'SSA_Benefit', 'Recipients Gap','Benefits Gap' 'Ajusted monthly benefit']
 	combined_data['Imputed Monthly Benefit'] = avemonbensimputed
 	combined_data['CPS + Imputed Recipients'] = imputed_grouped['marsupwt']
 	combined_data['CPS + Imputed Benefits'] = imputed_grouped['ss_wtt']
 
 
 	imputed_combined[['peridnum', 'ss_val']].to_csv("Imputed_combined.csv", sep=',', index=False)
-	print (imputed_combined.ss_val * imputed_combined.marsupwt).sum()
 	combined_data.to_csv("ByState.csv", sep=',')
 
 
