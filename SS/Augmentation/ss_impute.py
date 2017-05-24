@@ -46,18 +46,19 @@ def read_data():
 	return cps_alldata, ssa_data, disabled_average, retire_average
 
 def addnewvars(cps_alldata):
-    """
-    We create 4 binary (0 or 1) variables to use in the regression:
-        1. ss_indicator (Dependent variable): Indicates whether or not the individual in the CPS had received
-        Social Security benefits (ss_yn or sskid_yn was “Yes”)
-        2. disabled_yn: CPS variable was dis_hp was “Yes”. 1-disabled, 0-not diabled
-        3. aged_yn: CPS variable a_aged was greater than 65. 1-aged, 0-not aged
-        4. widowed_yn = CPS variable a_marital indicated 'widowed'. 1-widowed, 0-anything else
-        
-    Note: Because the variable a_age had categories for ’80-84 years of age’ and ‘85+ years of age’ we assigned
-        all of those between 80-84 a random uniformly distributed age and assumed everybody in the 85+ category
-        to be exactly 85 years. 
-    """
+
+	"""
+	We create 4 binary (0 or 1) variables to use in the regression:
+	1. ss_indicator (Dependent variable): Indicates whether or not the individual in the CPS had receive
+	Social Security benefits (ss_yn or sskid_yn was "Yes")
+	2. disabled_yn: CPS variable was dis_hp was "Yes". 1-disabled, 0-not diabled
+	3. aged_yn: CPS variable a_aged was greater than 65. 1-aged, 0-not aged
+	4. widowed_yn = CPS variable a_marital indicated 'widowed'. 1-widowed, 0-anything else
+
+	Note: Because the variable a_age had categories for '80-84 years of age' and '85+ years of age' we assigned
+	all of those between 80-84 a random uniformly distributed age and assumed everybody in the 85+ category
+	to be exactly 85 years.
+	"""
 	cps_alldata = cps_alldata.replace({"None or not in universe" : 0.}, regex=True)
 	cps_alldata['ss_val'] = cps_alldata['ss_val'].astype(float)
 	cps_alldata['ss_wtt'] = cps_alldata['marsupwt']*cps_alldata['ss_val']
@@ -90,8 +91,8 @@ def addnewvars(cps_alldata):
 	cps_alldata['Widowed_yn'] = 0
 	condition = cps_alldata['a_maritl'] == 'Widowed'
 	cps_alldata.loc[condition, 'Widowed_yn'] = 1
-    
-    # added other welfare program indicators
+
+	# added other welfare program indicators
 	cps_alldata['ssi_yn'] = np.where(cps_alldata['ssi_yn'] == 'Yes', 1, 0)
 	cps_alldata['wc_yn'] = np.where(cps_alldata['wc_yn'] == 'Yes', 1, 0)
 	cps_alldata['uc_yn'] = np.where(cps_alldata['uc_yn'] == 'Yes', 1, 0)
@@ -147,7 +148,7 @@ def impute(cps_alldata, ssa_data):
 	cps_recipients['ss_wtt'] /= 12
 	cps_grouped = cps_recipients.groupby('State').sum()
 	
-    #Combining cps and ssa totals (monthly) into one dataframe
+	# Combining cps and ssa totals (monthly) into one dataframe
 	combined_data = cps_grouped.join(ssa_data)
 	combined_data = combined_data.drop(['ss_indicator', 'Prob_Received'], axis=1)
 
@@ -158,11 +159,11 @@ def impute(cps_alldata, ssa_data):
 
 	#Getting the needed new recipients and benefits to impute
 	combined_data['rec_diff'] = pd.Series(combined_data['marsupwt']-combined_data['SSA_Recipients'],
-                                          index=combined_data.index)
+					      index=combined_data.index)
 	combined_data['ben_diff'] = pd.Series(combined_data['ss_wtt']-combined_data['SSA_Benefit'],
-                                          index=combined_data.index)
+					      index=combined_data.index)
 	combined_data['avemonben_ssa'] = pd.Series(combined_data['SSA_Benefit']/combined_data['SSA_Recipients'],
-                                               index=combined_data.index)
+						   index=combined_data.index)
 
 	#Imputing benefits
 	imputed = pd.DataFrame(columns = cps_recipients.columns.values)
@@ -170,38 +171,39 @@ def impute(cps_alldata, ssa_data):
 	avemonbensimputed = []
 
 	for state in ssa_data.index:
-			print state
-			imputed_state = pd.DataFrame(columns = cps_recipients.columns.values)
-			recips_state = cps_recipients[cps_recipients["State"] == state]
-			nonrecips_state = nonrecipients[nonrecipients["State"] == state]
-			gap_rec = combined_data.at[state,'rec_diff']
+		imputed_state = pd.DataFrame(columns = cps_recipients.columns.values)
+		recips_state = cps_recipients[cps_recipients["State"] == state]
+		nonrecips_state = nonrecipients[nonrecipients["State"] == state]
+		gap_rec = combined_data.at[state,'rec_diff']
 
 
-			#Matching recipient totals by adding one at a time
-			iter = 0
-			for i,recip in nonrecips_state.iterrows():
-				recip = recip.copy()
-				gap_rec += recip['marsupwt']
+		#Matching recipient totals by adding one at a time
+		iter = 0
+		for i,recip in nonrecips_state.iterrows():
+			recip = recip.copy()
+			gap_rec += recip['marsupwt']
 
-				if gap_rec > 0:
-					break
+			if gap_rec > 0:
+				nonimputed_state = nonrecips_state[iter:]
+				break
 
-				imputed_state = imputed_state.append(recip)
-				iter += 1
+			imputed_state = imputed_state.append(recip)
+			iter += 1
 
-			#Imputing the benefits for given state
+		#Imputing the benefits for given state
 
-			imputed_state['ss_val'] = imputed_state['benefit_to_impute'] * 12
-			imputed_state['ss_wtt'] = imputed_state['marsupwt']*imputed_state['ss_val']
-			imputed = imputed.append(imputed_state)
-			nonimputed = nonimputed.append(nonimputed_state)
-			avemonbensimputed.append(-combined_data.loc[state,'ben_diff']/imputed_state['marsupwt'].sum())
+		imputed_state['ss_val'] = imputed_state['benefit_to_impute'] * 12
+		imputed_state['ss_wtt'] = imputed_state['marsupwt']*imputed_state['ss_val']
+		imputed = imputed.append(imputed_state)
+		nonimputed = nonimputed.append(nonimputed_state)
+		avemonbensimputed.append(-combined_data.loc[state,'ben_diff']/imputed_state['marsupwt'].sum())
 
-    #Assigning the categorical variable for participation
-    cps_recipients['Participation'] = 1
-    imputed['Participation'] = 2
-    nonimputed['Participation'] = 0
-        
+
+	#Assigning the categorical variable for participation
+	cps_recipients['Participation'] = 1
+	imputed['Participation'] = 2
+	nonimputed['Participation'] = 0
+
 	#Combining the imputed recipients with cps recipients
 	imputed_combined = cps_recipients.append(imputed)
 	total_before_adjustment = (imputed_combined.ss_val * imputed_combined.marsupwt).sum()
@@ -213,9 +215,9 @@ def impute(cps_alldata, ssa_data):
 	combined_data['Imputed Monthly Benefit'] = avemonbensimputed
 	combined_data['CPS + Imputed Recipients'] = imputed_grouped['marsupwt']
 	combined_data['CPS + Imputed Benefits'] = imputed_grouped['ss_wtt']
+	# print (imputed_combined.ss_val * imputed_combined.marsupwt).sum()
 
-
-	imputed_combined[['peridnum', 'ss_val']].to_csv("Imputed_combined.csv", sep=',', index=False)
+	imputed_combined[['peridnum','ss_val', 'Participation']].to_csv("SS_augmentation.csv", sep=',')
 	combined_data.to_csv("ByState.csv", sep=',')
 
 
