@@ -6,7 +6,7 @@ The raw 2014 CPS reports just 6.1 million participants receiving $47.1 billion i
 ## CPS Micro-Data and SSA Targets
 In the SSI section of the CPS March Supplement, each respondent marked as a recipient of SSI also reports the total benefit they and their child receives.
 
-The targets for the imputation are primarily based on the SSA annual report.
+The targets for the imputation are primarily based on tables two and three in the [SSA annual report](https://www.ssa.gov/policy/docs/statcomps/ssi_asr/2014/index.html).
 In addition to the aggregates, we target each state's participants based on age group and dollar benefit subtotals.
 There are also several adjustments made before imputation.
 
@@ -29,12 +29,11 @@ Recipients and benefits were imputed using a two step procedure, first adding in
 ### Imputing Recipients
 
 We use a logistic regression to estimate the likelihood of an individual being a recipient.
-Our model is based on SSI program rules and the independent variables include countable income, age, and disability status.
-
-y = &alpha; + &beta; countable income + &beta; age + &beta; disability + &epsilon;
+Our model is based on SSI program rules and the independent variables include countable income, age, disability status, and participation in other welfare programs.
 
 Countable income includes earned and unearned income, and excludes the first $20 of most income received, and $65 of earnings over one-half of earning above $65. Age is an indicator for whether they are older than 65 or not, and disability is a combined indicator which covers both physical disability indicated in the CPS and work disability, as defined by the census.
+A set of dummy variables is used to indicate whether an individual participates in any other welfare program tracked in the CPS.
 
 ### Imputing and adjusting Benefit Amounts
 
-For each imputed recipient, we initially assign the average benefit in their state and age group. Aggregate benefits are still lower than the administrative total after this step, so we augment each record's benefit proportionally by the ratio of administrative total over current aggregates. 
+For each imputed recipient, we initially assign the average benefit in their state and age group. Aggregate benefits are still lower than the administrative total after this step, so we augment each record's benefit proportionally by the ratio of administrative total over current aggregates.
