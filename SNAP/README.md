@@ -44,7 +44,7 @@ We then use the following regression to determine the likelihood of a household
 participating in the program:
 
 _indicator_ = &alpha; + &beta; _net income_ + &beta; _household size_ +
-                        &beta; _disability_ + &beta; _number of children +
+                        &beta; _disability_ + &beta; _number of children_ +
                         &beta; _ABAWD_ + &beta; _welfare participation_ + &epsilon;
 
 Able-Bodied Adults Without Dependents (ABAWD) are not allowed to stay on SNAP
