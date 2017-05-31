@@ -6,8 +6,9 @@ the same benefit amounts and time receiving benefits. For example, if one
 person in the household reports receiving $1,000 in benefits for four months,
 everyone in the household will report the same.
 
-Target data for the imputation came from official SNAP data. In Fiscal Year 2014,
-an average of 22.74 million households claimed about $70 billion in benefits.
+Target data for the imputation came from official [SNAP data](https://www.fns.usda.gov/sites/default/files/ops/Characteristics2014.pdf).
+In Fiscal Year 2014, an average of 22.74 million households claimed about
+$70 billion in benefits.
 
 ## Imputation Procedure
 
@@ -17,10 +18,8 @@ for benefits in order to match total benefit amounts.
 
 ## Imputing Recipients
 
-A basic linear regression is used to predict the likelihood of participation in
-the SNAP program. In compliance with SNAP rules, only net income is used as an
-independent variable. Net income is computed using the following rules, also in
-compliance with program rules:
+We initially calculate net income according to program rules:
+
 1. Gross income for each household is attained by summing up the earned and
 unearned income of all household members.
 2. A deduction of 20% of earned income is applied.
@@ -32,6 +31,7 @@ unearned income of all household members.
 | 4 | $168 |
 | 5  | $197 |
 | >= 6| $ 226|
+| [_Source_](https://www.fns.usda.gov/snap/cost-living-adjustment-cola-information)| |
 
 4. For households with members ages 60 or older, medical expenses exceeding $35,
 if they are not paid by insurance or someone else, are also deducted
@@ -40,9 +40,19 @@ if they are not paid by insurance or someone else, are also deducted
 official numbers of $10 and $290 a month. These costs are not provided by the
 CPS, so we instead use numbers from the USDA.
 
-The final model is:
+We then use the following regression to determine the likelihood of a household
+participating in the program:
 
-_participation_ = &alpha; + &beta; _net income_ + &epsilon;
+_indicator_ = &alpha; + &beta; _net income_ + &beta; _household size_ +
+                        &beta; _disability_ + &beta; _number of children +
+                        &beta; _ABAWD_ + &beta; _welfare participation_ + &epsilon;
+
+Able-Bodied Adults Without Dependents (ABAWD) are not allowed to stay on SNAP
+for more than three months, thus their households have a lower chance of receiving
+benefits.
+
+Disability and welfare participation are included to indicate any disabilities
+in the household and participation in other welfare programs, respectively.
 
 SNAP rules set upper bounds on monthly income in order to be allowed to participate
 in the program, the highest of which is $5,490. Therefore, we only run households
@@ -60,8 +70,17 @@ individual and household numbers can match administrative totals.
 
 For each imputed household recipient, we assign the average benefit amount for
 their state. We then calculate the total dollar benefits for each state and
-compare imputed benefits to SNAP administrative data. Exact qualifications
-for SNAP eligibility vary state by state, so adjustment ratios are determined
-for each state by dividing total administrative benefits by total imputed benefits.
-Most ratios are close to one and are used to either increase or shrink each
-household's benefits.
+compare imputed benefits to SNAP administrative data. The accuracy of our imputations
+varies state-by-state, so adjustment ratios are determined for each state by
+dividing total administrative benefits by total imputed benefits. Most ratios
+are close to one and are used to either increase or shrink each household's
+benefits.
+
+### Continuous Updating
+The following variables will need to be updated in the model and this document
+when moving to the next year:
+1. Deduction amounts based on household size
+2. Average dependent care and shelter costs
+3. SNAP income eligibility standards
+4. Total benefit and participation levels
+5. State-level targets
