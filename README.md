@@ -26,7 +26,6 @@ This Repo will include the following programs in the near future:
 - General Assistance
 - Public Housing
 - Women, Infants and Children (WIC)
-- Unemployment Insurance
 - Workman’s Compensation
 
 [C-TAM Documentation](https://docs.google.com/document/d/1CIfp8KwECJa4bIF9U3hHTf3P7Y19ya2NI5QhEDOyG98/edit?usp=sharing) (Latest Version, Work in Progress)
