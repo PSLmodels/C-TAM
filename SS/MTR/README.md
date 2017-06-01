@@ -21,15 +21,13 @@ The following are descriptions of the different files contained in this suite:
 	- arma_projections contains the code (arma.ipynb) that we used to calculate our future projections (post-2025) for bend points and CPI. 
 	- see_output.py allows for analysis of the output of these files.
 	
-- CPS_age_fix: Uses our Social Security calculator to estimate the marginal tax rates for all working individuals of the cps_age_fixed.csv file. 
+- CPS_RETS: Uses our Social Security calculator to estimate the marginal tax rates for all working individuals of the cps_age_fixed.csv file. 
 	- CPS_keep_SSVars.py cleans the cps_age_fix.csv data file that is used in our MTR calculation.
 	- SS_MTR_constant.py calculates MTRs under the assumption that future earnings for all individuals remains constant from their 2014 earnings, but are indexed by CPI and wage index.
 	- SS_MTR_FutureReg.py calculates MTRs using future earnings that are calculated via Mincer's earnings function, and are indexed by CPI and wage index
 	- SS_MTR_constant_noindex.py calculates MTRs under the assumption that future earnings for all individuals remains constant from their 2014 earnings. All earnings and benefit amounts are in 2014 dollars.
 	- SS_MTR_future_noindex.py calculates MTRs using future earnings that are calculated via Mincer's earnings function. All earnings and benefit amounts are in 2014 dollars.
 	- see_outputCPS.py allows for analysis of the output of these files.
-
-- CPS_RETS: This folder has the same organization as CPS_age_fix, but calculates MTRs for the CPSRETS.CSV file instead of cps_age_fix.csv.
 
 - PUF: Uses our Social Security calculator to estimate the marginal tax rates for all working individuals of the puf.csv file. 
 	- CPS_keep_SSVars.py cleans the puf.csv data file that is used in our MTR calculation.

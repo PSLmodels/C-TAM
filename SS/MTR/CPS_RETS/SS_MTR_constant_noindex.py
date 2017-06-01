@@ -416,7 +416,7 @@ adjustment = 500
 bendpoints = pd.read_csv('Bendpoints_noindex.csv', dtype = {"Year": np.int32, "Bend_pt1": np.int32, "Bend_pt2": np.int32})
 max_earnings = pd.read_csv('Max_Earnings_noindex.csv', dtype = {"Year": np.int32, "Max_Earnings": np.float64})
 
-CPS = pd.read_csv('CPSRETS.CSV')
+CPS = pd.read_csv('CPSRETS.csv')
 CPS = CPS[[ 'AGEH' ,'AGES' ,'WAS', 'WASS','BIL_HEAD' ,'BIL_SPOUSE', 'FIL_HEAD', 'FIL_SPOUSE',\
 	 	'HGA_HEAD', 'HGA_SPOUSE', 'FTPT_HEAD', 'FTPT_SPOUSE', 'FAMREL_HEAD','FAMREL_SPOUSE', \
 	 	'MJIND_SPOUSE', 'MJIND_HEAD','CPSSEQ', 'WT','h_seq', 'GENDER_HEAD', 'GENDER_SPOUSE', \

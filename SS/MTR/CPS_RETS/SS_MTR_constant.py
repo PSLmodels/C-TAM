@@ -463,7 +463,7 @@ wages.loc[wages['Year'] < sim_year, 'Avg_Wage'] = wages.loc[wages['Year'] == sim
 boost_futurereg = wages['Avg_Wage'].values / wages['Avg_Wage'][wages['Year'] == sim_year].values[0] 
 
 
-CPS = pd.read_csv('CPSRETS.CSV')
+CPS = pd.read_csv('CPSRETS.csv')
 CPS = CPS[[ 'AGEH' ,'AGES' ,'WAS', 'WASS','BIL_HEAD' ,'BIL_SPOUSE', 'FIL_HEAD', 'FIL_SPOUSE',\
 	 	'HGA_HEAD', 'HGA_SPOUSE', 'FTPT_HEAD', 'FTPT_SPOUSE', 'FAMREL_HEAD','FAMREL_SPOUSE', \
 	 	'MJIND_SPOUSE', 'MJIND_HEAD','CPSSEQ', 'WT','h_seq', 'GENDER_HEAD', 'GENDER_SPOUSE', \
