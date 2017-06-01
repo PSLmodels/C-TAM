@@ -29,7 +29,24 @@ This Repo will include the following programs in the near future:
 - Unemployment Insurance
 - Workman’s Compensation
 
+[C-TAM Documentation](https://docs.google.com/document/d/1CIfp8KwECJa4bIF9U3hHTf3P7Y19ya2NI5QhEDOyG98/edit?usp=sharing) (Latest Version, Work in Progress)
 
+Core Maintainer
+
+- Matt Jensen
+- Amy Xu
+
+Contributor
+
+- Parker Rogers
+- Yuying Wang
+- James Olmstead
+- Xueliang Wang
+
+We would like to thank Dan Feenberg, Kevin Corinth, Jamie Hall and many other  scholars at the American Enterprise Institute for their thoughtful suggestions. 
+
+
+Note:
 1. Both code scripts and documentation in PDF format are included in this Repository. For editable documentation, please contact Amy Xu at amy.xu@aei.org.
 2. This dataset is created by John O'hare from Quantria Strategies. Documentation can be found on Quantria [website](http://www.quantria.com/assets/img/TechnicalDocumentationV4-2.pdf).
 3. OSPC's ACA PTC [calculator](http://chiselapp.com/user/mrh/repository/OSPC-ACA/doc/trunk/www/home.wiki).
