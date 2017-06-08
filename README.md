@@ -12,6 +12,7 @@ Currently this Repo includes the following programs<sup>1</sup>, derived from 20
     - [Veterans Benefit](https://github.com/open-source-economics/Benefits/tree/master/VB): No MTR is imputed since this is a social insurance program.
     - [Social Security](https://github.com/open-source-economics/Benefits/tree/master/SS): The MTR is estimated for people in the work force, based on their current earnings, education experience, and work experience. The model for MTR estimation will be improved with respect to life-earning projection assumptions.
 
+
 -   Programs with participation based on CPS ASEC:
     - Medicaid: Participation is augmented to match administrative data. Insurance values for each participant are imputed based on Medical Expenditure Penal Survey (MEPS) expenditure data. No MTR is imputed for current version, but may be estimated at the eligible income upper bound in future.
     - Medicare: Insurance values for each participant are imputed based on Medical Expenditure Penal Survey (MEPS) expenditure data. No MTR is imputed.
@@ -26,8 +27,22 @@ This Repo will include the following programs in the near future:
 - General Assistance
 - Public Housing
 - Women, Infants and Children (WIC)
-- Unemployment Insurance
 - Workman’s Compensation
+
+Intermediate term improvements (2017):
+
+- Extrapolate 2014 CPS augmented welfare data to 2026
+- Add administrative costs for all welfare programs
+- Impute immigrant status
+- Estimate Participation Tax Rate (PTR) for welfare participates
+- Adjust additional programs listed above
+
+Long term improvements (2018):
+
+- Impute institutional population from American Community Survey population
+- Model Medicaid cliff marginal tax rate
+- Expand the database to include 2015 CPS
+
 
 [C-TAM Documentation](https://docs.google.com/document/d/1CIfp8KwECJa4bIF9U3hHTf3P7Y19ya2NI5QhEDOyG98/edit?usp=sharing) (Latest Version, Work in Progress)
 
