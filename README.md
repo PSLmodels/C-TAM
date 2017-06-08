@@ -29,11 +29,20 @@ This Repo will include the following programs in the near future:
 - Women, Infants and Children (WIC)
 - Workman’s Compensation
 
-Intermediate terms improvements:
+Intermediate term improvements (2017):
+
+- Extrapolate 2014 CPS augmented welfare data to 2026
+- Add administrative costs for all welfare programs
+- Impute immigrant status
+- Estimate Participation Tax Rate (PTR) for welfare participates
+- Adjust additional programs listed above
+
+Long term improvements (2018):
 
 - Impute institutional population from American Community Survey population
 - Model Medicaid cliff marginal tax rate
 - Expand the database to include 2015 CPS
+
 
 [C-TAM Documentation](https://docs.google.com/document/d/1CIfp8KwECJa4bIF9U3hHTf3P7Y19ya2NI5QhEDOyG98/edit?usp=sharing) (Latest Version, Work in Progress)
 
