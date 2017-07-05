@@ -1,3 +1,4 @@
+# coding: utf-8
 import pandas as pd
 import numpy as np
 import csv
@@ -34,7 +35,7 @@ AveBen2014_MonthlySSA = 70703666667
 
 def read_data():
 
-	cps_alldata = pd.read_csv("cpsmar2014t.csv", header=0, \
+	cps_alldata = pd.read_csv("../../../Dropbox/asec2014_pubuse.csv", header=0, \
 							usecols=["peridnum","gestcen", "gestfips", "marsupwt", "ss_yn", "sskidyn", "ss_val", "dis_hp", "a_maritl", "a_age", "a_hga"])
 	cps_alldata.rename(columns = {'gestcen':'State'}, inplace = True)
 
@@ -117,7 +118,7 @@ def impute(cps_alldata, ssa_data):
 
 
 	#Gets nonrecipients and sorts them by state and likelihood of getting ss
-	nonrecipients = (cps_trimmed[cps_trimmed["ss_yn"] != "Yes"]).sort(columns=['State', 'Prob_Received'], ascending=[True,False])
+	nonrecipients = (cps_trimmed[cps_trimmed["ss_yn"] != "Yes"]).sort_values(by=['State', 'Prob_Received'], ascending=[True,False])
 
 
 	#Converting to monthly values and summing across states
@@ -184,11 +185,11 @@ def impute(cps_alldata, ssa_data):
 	#Combining the imputed recipients with cps recipients
 	imputed_combined = cps_recipients.append(imputed)
 	imputed_combined = imputed_combined.append(nonimputed)
-	imputed_combined.sort(inplace=True)
+	imputed_combined = imputed_combined.sort_values(by='Prob_Received')
 
 	#Getting final results and exporting to csv
 	imputed_grouped = imputed_combined.groupby('State').sum()
-	combined_data.columns = ['CPS_ID','CPS Weighted Recipients', 'CPS Benefit per Recipient', 'Weighted Benefits', 'SSA_Recipients',\
+	combined_data.columns = ['CPS Weighted Recipients', 'CPS Benefit per Recipient', 'Weighted Benefits', 'SSA_Recipients',\
 	 						 'SSA_Benefit', 'Recipients Gap', 'Benefits Gap', 'Ajusted monthly benefit']	
 	combined_data['Imputed Monthly Benefit'] = avemonbensimputed
 	combined_data['CPS + Imputed Recipients'] = imputed_grouped['marsupwt']
