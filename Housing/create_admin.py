@@ -1,4 +1,6 @@
-# This script creates the administrative data used for imputation
+''' This script creates the administrative data used for imputation'''
+
+''' You can find STATE_2014.csv at https://www.huduser.gov/portal/datasets/assthsg.html. Select the 2014 file, at the state summary level, with all variables. We would use county level if CPS had county codes for all respondents'''
 import numpy as np
 import pandas as pd
 import re

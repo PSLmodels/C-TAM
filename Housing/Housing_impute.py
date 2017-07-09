@@ -14,7 +14,7 @@ import statsmodels.discrete.discrete_model as sm
 import matplotlib.pyplot as plt
 
 
-# Administrative level data
+# Administrative level data. 'Admin_totals_all.csv' obtained from create_admin.py
 Admin_totals =  pd.read_csv('Admin_totals_all.csv')
 Admin_totals['Avg_Voucher'] = Admin_totals['housing_value'] / Admin_totals['housing_recipients']
 Admin_totals['Avg_Voucher'] *= 10000
@@ -22,12 +22,12 @@ Admin_totals['Avg_Voucher'] = Admin_totals['Avg_Voucher'].astype(int)
 Admin_totals['Avg_Voucher'] /= 10000
 Admin_totals[['Fips','Avg_Voucher']].to_csv('avg.csv')
 
-#RF probabilities of receiving housing choice vouchers
+#Random Forest probabilities of receiving housing assistance. 'rf_probs.csv' obtained from rf_probs.ipynb.
 Rf_probs = np.loadtxt('rf_probs.csv')
 
 
 
-# 2014 Income limits for Housing vouchers, w/ 50 and 30 percent median income cutoffs
+# 2014 Income limits for Housing vouchers, w/ 50 and 30 percent median income cutoffs. 'Income_limits.csv' obtained from create_incomelims.py file
 Income_limits = pd.read_csv('Income_limits.csv')
 def income_lim_indicator30(income, family_size, gestfips):
     if income <= Income_limits['Lim30_14p'+ str(int(family_size))][(Income_limits['Fips'] == gestfips)].values:
@@ -204,8 +204,9 @@ f_House_yn['under_30_inc'] = f_House_yn.apply(lambda x: income_lim_indicator30(x
 # Under 50 percent of median income
 f_House_yn['under_50_inc'] = f_House_yn.apply(lambda x: income_lim_indicator50(x['family_net'], x['family_size'],
     x['f_gestfips']), axis=1)
+f_House_yn = f_House_yn.reset_index()
 # f_House_yn.to_csv('use_df_both.csv')
-f_House_yn = pd.read_csv('use_df_both.csv')
+# f_House_yn = pd.read_csv('use_df_both.csv')
 f_House_yn['RfYes'] = Rf_probs[:, 1]
 
 #Regression
@@ -364,7 +365,7 @@ df['Admin total recipients'] = Admin_totals['housing_recipients']
 df.to_csv('post_augment_adminCPS_totals.csv')
 
 
-'''For Random Forest probabilities'''
+'''Using Random Forest probabilities'''
 
 f_House_yn['impute'] = np.zeros(len(f_House_yn))
 f_House_yn['housing_impute'] = np.zeros(len(f_House_yn))

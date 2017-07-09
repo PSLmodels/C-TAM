@@ -1,3 +1,6 @@
+'''This script creates the income limit categories that are used for the logistic regression in Housing_impute.py'''
+
+'''You can find income_limits2014.csv at https://www.hudexchange.info/programs/home/home-income-limits/?filter_Year=2014&filter_=Scope=&filter_State=&programHOME&group=IncomeLmts'''
 import numpy as np
 import pandas as pd
 
