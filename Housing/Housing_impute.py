@@ -13,6 +13,8 @@ import random
 import statsmodels.discrete.discrete_model as sm
 import matplotlib.pyplot as plt
 
+# Do you want to use the supplemental poverty measure data? This includes better estimates of FHOUSSUB with its variable spmu_caphousesub
+use_spm_data = False
 
 # Administrative level data. 'Admin_totals_all.csv' obtained from create_admin.py
 Admin_totals =  pd.read_csv('Admin_totals_all.csv')
@@ -22,9 +24,11 @@ Admin_totals['Avg_Voucher'] = Admin_totals['Avg_Voucher'].astype(int)
 Admin_totals['Avg_Voucher'] /= 10000
 Admin_totals[['Fips','Avg_Voucher']].to_csv('avg.csv')
 
-#Random Forest probabilities of receiving housing assistance. 'rf_probs.csv' obtained from rf_probs.ipynb.
-Rf_probs = np.loadtxt('rf_probs.csv')
-
+#Random Forest probabilities of receiving housing assistance. 'rf_probs(_spm).csv' obtained from rf_probs.ipynb.
+if use_spm_data == True:
+    Rf_probs = np.loadtxt('rf_probs_spm.csv')
+else:
+    Rf_probs = np.loadtxt('rf_probs.csv')
 
 
 # 2014 Income limits for Housing vouchers, w/ 50 and 30 percent median income cutoffs. 'Income_limits.csv' obtained from create_incomelims.py file
@@ -41,17 +45,22 @@ def income_lim_indicator50(income, family_size, gestfips):
     else:
         return 0
 
-
-# Variables we use in CPS:
+# # Variables we use in CPS:
 CPS_dataset = pd.read_csv('cpsmar2014t.csv')
 columns_to_keep = ['hprop_val','housret', 'prop_tax','fhoussub', 'fownu18', 'fpersons','fspouidx', 'prcitshp', 'gestfips','marsupwt','a_age','wsal_val','semp_val','frse_val',
                   'ss_val','rtm_val','div_val','oi_off','oi_val','uc_yn','uc_val', 'int_yn', 'int_val','pedisdrs', 'pedisear', 'pediseye', 
                     'pedisout', 'pedisphy', 'pedisrem','a_sex','peridnum','h_seq','fh_seq', 'ffpos', 'fsup_wgt',
-                        'hlorent', 'hpublic', 'hsup_wgt', 'hfdval', 'fmoop', 'f_mv_fs', 'ffngcaid']
+                        'hlorent', 'hpublic', 'hsup_wgt', 'hfdval', 'fmoop', 'f_mv_fs', 'ffngcaid', 'pppos', 'a_famrel', 'a_ftpt']
 CPS_dataset = CPS_dataset[columns_to_keep]
 # CPS_dataset.to_csv('CPS_Housing_public.csv', columns= columns_to_keep, index=False)
 # CPS_dataset = pd.read_csv('CPS_Housing_public.csv')
 
+
+if use_spm_data == True:
+    # Get data 'spmresearch2013new.dta' from https://www.census.gov/data/datasets/2013/demo/supplemental-poverty-measure/spm.html SPM data from 2013 since 2014 cps reflects what happened in 2013
+    spm_data = pd.read_stata('spmresearch2013new.dta')
+    CPS_dataset = CPS_dataset.merge(spm_data[['spmu_caphousesub', 'h_seq', 'pppos']], on = ['h_seq', 'pppos'])
+    CPS_dataset['fhoussub'] = CPS_dataset['spmu_caphousesub']
 
 #recipient or not of Housing Voucher Assistance program 
 CPS_dataset.hlorent = np.where(CPS_dataset.hlorent == 'Not in universe',0,CPS_dataset.hlorent)
@@ -65,9 +74,10 @@ CPS_dataset.hpublic = np.where(CPS_dataset.hpublic == 'No', 0, CPS_dataset.hpubl
 CPS_dataset.hpublic = np.where(CPS_dataset.hpublic == 'Yes', 1, CPS_dataset.hpublic)
 CPS_dataset.hpublic = CPS_dataset.hpublic.astype(int)
 
-#Totals for household subsidies
-CPS_dataset.fhoussub = np.where(CPS_dataset.fhoussub == 'None',0,CPS_dataset.fhoussub)
-CPS_dataset.fhoussub = CPS_dataset.fhoussub.astype(int)
+#Totals for household subsidies (only have to correct if using CPS' fhoussub, since SPM fhoussub is already corrected)
+if use_spm_data == False:
+    CPS_dataset.fhoussub = np.where(CPS_dataset.fhoussub == 'None',0,CPS_dataset.fhoussub)
+    CPS_dataset.fhoussub = CPS_dataset.fhoussub.astype(int)
 
 #Removing those who receive hlorent, but who have no subsequent fhoussub value to describe it
 CPS_dataset.hlorent = np.where((CPS_dataset.hlorent == 1) & (CPS_dataset.fhoussub == 0),
@@ -80,6 +90,8 @@ CPS_dataset.hpublic = np.where((CPS_dataset.hpublic == 1) & (CPS_dataset.fhoussu
 CPS_dataset['housing'] = 0
 CPS_dataset.housing = np.where((CPS_dataset.hpublic == 1) | (CPS_dataset.hlorent == 1),
      1, CPS_dataset.housing)
+
+
 
 #Prepare household level data
 Housing_indicator = CPS_dataset.groupby(['fh_seq', 'ffpos'])['housing'].mean()
@@ -134,6 +146,12 @@ HOUSRET = CPS_dataset.groupby(['fh_seq', 'ffpos'])['housret'].mean()
 
 #Net Income
 CPS_dataset['family_net_income'] = p_earned + p_unearned
+
+#Income exclusions
+CPS_dataset.family_net_income = np.where((CPS_dataset.a_famrel == "Child") & (CPS_dataset.a_age < 18),
+     0, CPS_dataset.family_net_income)
+CPS_dataset.family_net_income = np.where((CPS_dataset.a_famrel == "Child") & (CPS_dataset.a_age >= 18)
+    & (CPS_dataset.family_net_income > 480)& (CPS_dataset.a_ftpt == 'Full time'), 480, CPS_dataset.family_net_income)
 family_net_income = CPS_dataset.groupby(['fh_seq', 'ffpos'])['family_net_income'].sum()
 
 f_House_yn = DataFrame(Housing_indicator)
@@ -345,7 +363,11 @@ r['adjust ratio'] = r['adjust ratio'].astype(int)
 r['adjust ratio'] /= 10000
 r.to_csv('amount.csv', index=False)
 
-f_House_yn.to_csv('Housing_Imputation.csv', 
+if use_spm_data == True:
+    f_House_yn.to_csv('Housing_Imputation_spm.csv', 
+                   columns=['fh_seq','ffpos','Housing_participation', 'housing_impute'])
+else:
+    f_House_yn.to_csv('Housing_Imputation.csv', 
                    columns=['fh_seq','ffpos','Housing_participation', 'housing_impute'])
 
 
@@ -362,7 +384,12 @@ df['post augment CPS total benefits (annual)'] = total_voucherprice
 df['post augment CPS total recipients'] = total_recipients
 df['Admin total benefits (annual)'] = Admin_totals['housing_value']
 df['Admin total recipients'] = Admin_totals['housing_recipients']
-df.to_csv('post_augment_adminCPS_totals.csv')
+if use_spm_data == True:
+    df.to_csv('post_augment_adminCPS_totals_spm.csv')
+else:
+    df.to_csv('post_augment_adminCPS_totals.csv')
+
+
 
 
 '''Using Random Forest probabilities'''
@@ -449,8 +476,12 @@ r['adjust ratio'] = r['adjust ratio'].astype(int)
 r['adjust ratio'] /= 10000
 r.to_csv('amount_rf.csv', index=False)
 
-f_House_yn.to_csv('Housing_Imputation_rf.csv', 
-                   columns=['fh_seq','ffpos','Housing_participation', 'housing_impute'])
+if use_spm_data == True:
+    f_House_yn.to_csv('Housing_Imputation_rf_spm.csv', 
+                         columns=['fh_seq','ffpos','Housing_participation', 'housing_impute'])
+else:
+    f_House_yn.to_csv('Housing_Imputation_rf.csv', 
+                      columns=['fh_seq','ffpos','Housing_participation', 'housing_impute'])
 
 
 ## Checking post-adjustment totals to see if they match admin totals
@@ -466,4 +497,9 @@ df['post augment CPS total benefits (annual)'] = total_voucherprice
 df['post augment CPS total recipients'] = total_recipients
 df['Admin total benefits (annual)'] = Admin_totals['housing_value']
 df['Admin total recipients'] = Admin_totals['housing_recipients']
-df.to_csv('post_augment_adminCPS_totals_rf.csv')
+if use_spm_data == True:
+    df.to_csv('post_augment_adminCPS_totals_rf_spm.csv')
+else:
+    df.to_csv('post_augment_adminCPS_totals_rf.csv')
+
+
