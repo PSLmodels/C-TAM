@@ -20,13 +20,12 @@ Before running the imputation procedure, one must do five things (besides downlo
 
 1. Choose whether or not to use the Supplemental Poverty Measure (SPM) dataset's 
 housing subsidy amounts by setting the imputation script variable "use_spm_data = True/False" according to this decision. 
--Refer to the documentation _Housing\_Imputation\_Report.pdf_ for more details on this dataset. 
+- Refer to the documentation _Housing\_Imputation\_Report.pdf_ for more details on this dataset. 
 
-2. If you choose True, then download the [SPM 2013 at dataset](https://www.census.gov/data/datasets/2013/demo/supplemental-poverty-measure/spm.html) into the same directory as the imputation script. 
+2. If you choose True, then download the [SPM 2013 dataset](https://www.census.gov/data/datasets/2013/demo/supplemental-poverty-measure/spm.html) into the same directory as the imputation script. 
 
-3. Open the _rf\_probs.ipynb_ script and set use\_spm\_data = True/False depending on what you chose above. Then run this script to
-produce the corresponding Random Forest Classifer probabilities used in the imputation
-labeled as 'rf_probs(_spm).csv' 
+3. Open the _rf\_probs.ipynb_ script and set use\_spm\_data = True/False depending on what you chose above. Run the script. 
+- This creates the Random Forest Classifer probabilities used in the imputation labeled as _rf\_probs(\_spm).csv_. 
 
 4. Run _create\_admin.py_ with the appropriate [HUD administrative data](https://www.huduser.gov/portal/datasets/assthsg.html) already downloaded into the imputation script location (refer to documentation for more information).
 - This creates the administrative data in the file _Admin\_totals\_all.csv_ used in the imputation.
@@ -39,9 +38,10 @@ labeled as 'rf_probs(_spm).csv'
 We initially calculate net income according to program rules:
 
 1. Gross income for each household is attained by summing up the earned and
-unearned income of all household members (including.
-2. An exclusion of all dependent children's income is applied.
+unearned income of all household members.
+2. An exclusion of all dependent children's income is applied (younger than 18).
 3. An exclusion of all educational financial assistance is applied (we don't initially include this).
+4. A cap of $480 for all children 18 and older that are full-time students is applied.
 
 We use this definition of income as a proxy for defining the income limit threshold indicators.
 
@@ -55,15 +55,13 @@ _housing indicator_ = &alpha; + &beta; _family size_ + &beta; _under30inc_ +
                         &beta; _FMOOP_ + &beta; _medicaid_ + &beta; _propval_ + &epsilon;
 
 
-Households are then ranked by the probability of participation, and, for each
-state's subgroup, their weights are summed until they reach the administrative
-level. According to CPS and USDA, the gap between individual and household
-recipients reported to the CPS and administrative totals is 10.5 million and 10.3
-million, respectively. Because of this, the size of each household is limited
-to one person when ranking participation probability. This is the only way both
-individual and household numbers can match administrative totals.
+Households are then ranked by the probability of participation. Then if we are augmenting recipients, for each
+state's subgroup we aggregate all weights of the most likely participants, until they reach the administrative
+level totals for that state. If we are reducing, then for each
+state's subgroup we aggregate all current recipient weights until they reach the administrative
+level totals for that state, then exclude the rest of the recipients from the recipient pool.
 
-In rf_probs.ipynb we also use a more accurate Random Forest Classifier (RFC) model, instead of a logistic regression, to determine the
+In rf_probs.ipynb we use a more accurate Random Forest Classifier (RFC) model, instead of a logistic regression, to determine the
 likelihood of a houshold participating in the housing program. We then repeat the same step above with the new probabilities.
 
 ## Benefit Imputation
