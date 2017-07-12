@@ -4,6 +4,8 @@ Benefits and participation for welfare and transfer programs are systematically 
 
 The CPS Transfer Augmentation Model (C-TAM) model adjusts the CPS ASEC for the under-reporting of welfare and transfer program participation and benefits, imputes benefits where they are excluded, and imputes marginal tax rates that stem from welfare and transfer programs. Adjusted welfare and transfer data can serve as the basis for micro-simulating policy reforms (for example, [Basic Income](https://github.com/open-source-economics/Benefits/blob/master/Basic%20Income.pdf)) that replace existing welfare and transfer programs.
 
+Note: when processing the raw CPS files from NBER, use the provided STATA scripts, rather than the SAS scripts.
+
 Currently this Repo includes the following programs<sup>1</sup>, derived from 2014 CPS March Supplement:
 
 - Programs with participation and benefits based on CPS ASEC:
