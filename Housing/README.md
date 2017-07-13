@@ -9,13 +9,18 @@ at the state summary level, with the summary of all programs and all variables.
 
 The Housing Choice Voucher (HCV), Section 8 Project-Based Rental Assistance (PBRA), and public housing programs are the largest federal rental assistance programs administered by The Department of Housing and Urban Development (HUD). Smaller programs that we also consider include Moderate  Rehabilitation (project-based), Section 221 Below Market Interest Rate (BMIR) (project-based), Section 202 Supportive Housing for the Elderly Program (project-based), and Section 811 Supportive Housing for Persons with Disabilities (project-based). For simplification, we lump these smaller programs into the PBRA program. These programs are intended to subsidize monthly rent payments for low-income families through long or short-term subsidy contracts for either (depending on the program) the tenant or owner of privately owned housing units, or through publicly owned housing units with lowered rents. The CPS provides micro-data for public housing with its HPUBLIC variabe, and micro-data for HCV and PBRA with its HLORENT variable. However, due to CPS respondents' inability to differentiate between these two housing assitance questions (see _Housing\_Imputation\_Report.pdf_ for details), we lumped them into a new variable "HOUSING" (if they receive either variable, or any type of rental assistance, HOUSING = 1).
 
+
+
 In Fiscal Year 2014, according to _Picture of Subsidized Households_ around 4.5 million families claimed
 roughly 36 billion dollars in federal housing assistance benefits (for all programs combined). More specifically, approximately 2.1 million families claimed roughly 16 billion dollars in HCV benefits, approximately 1.2 million families claimed roughly 10 million dollars in PBRA benefits (without smaller programs), while approximately 1 million families lived in public housing which subsidized approximately 5.8 million dollars of rent. The remaining participants and outlays come from the smaller programs listed above.
+
+Correspondingly, 2014 CPS totals indicate that around 6 million families claimed roughly 16.2 billion dollars in federal housing assistance benefits (all programs combined). In our documentation we explain the cause of recipient overreporting, and benefit underreporting. 
+
 
 ## Imputation Procedure
 
 Recipients and benefits are imputed using a two step procedure. First, participation
-is imputed to match administrative totals through an augmentation or reduction process (depending on over or underreporting). For most states we reduce this benefit's recipient totals because housing assistance is overreported in the CPS due to respondent confusion with the housing assistant questions (see pdf documentation for details).
+is imputed to match administrative totals through an augmentation or reduction process (depending on over or underreporting). For most states we reduce the recipient totals because housing assistance is overreported in the CPS due to respondent confusion with the housing assistant questions (see pdf documentation for details).
 Second, we impute an adjustment ratio
 for benefits in order to match total benefit amounts.
 
