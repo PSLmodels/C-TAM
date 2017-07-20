@@ -40,21 +40,21 @@ Admin_totals[['Fips','Avg_benefit']].to_csv('avg.csv')
 Rf_probs = np.loadtxt('rf_probs.csv')
 
 # Variables we use in CPS:
-# CPS_dataset = pd.read_csv('asec2015_pubuse.csv')
-# columns_to_keep = ['lkweeks', 'lkstrch', 'weuemp', 'wkswork', 'a_explf', 'a_lfsr', 'pruntype', 'a_untype', 'prwkstat',
-#   'a_age', 'age1', 'ptotval', 'ptot_r', 'pemlr', 'pyrsn', 'filestat', 
-#   'a_wkslk', 'hrswk', 'agi', 'tax_inc', 'peioocc', 'a_wksch', 'wemind', 'hprop_val','housret', 'prop_tax','fhoussub', 'fownu18', 'fpersons','fspouidx', 'prcitshp', 'gestfips','marsupwt','a_age','wsal_val','semp_val','frse_val',
-#                   'ss_val','rtm_val','div_val','oi_off','oi_val','uc_yn','uc_val', 'int_yn', 'int_val','pedisdrs', 'pedisear', 'pediseye', 
-#                     'pedisout', 'pedisphy', 'pedisrem','a_sex','peridnum','h_seq','fh_seq', 'ffpos', 'fsup_wgt',
-#                         'hlorent', 'hpublic', 'hsup_wgt', 'hfdval', 'fmoop', 'f_mv_fs', 'pppos', 'a_famrel', 'a_ftpt']
-# CPS_dataset = CPS_dataset[columns_to_keep]
-# CPS_dataset = CPS_dataset.replace({'None or not in universe' : 0}, regex = True)
-# CPS_dataset = CPS_dataset.replace({'Not in universe' : 0}, regex = True)
-# CPS_dataset = CPS_dataset.replace({'Not in Universe' : 0}, regex = True)
-# CPS_dataset = CPS_dataset.replace({'NIU' : 0}, regex = True)
-# CPS_dataset = CPS_dataset.replace({'None' : 0}, regex = True)
+CPS_dataset = pd.read_csv('asec2015_pubuse.csv')
+columns_to_keep = ['lkweeks', 'lkstrch', 'weuemp', 'wkswork', 'a_explf', 'a_lfsr', 'pruntype', 'a_untype', 'prwkstat',
+  'a_age', 'age1', 'ptotval', 'ptot_r', 'pemlr', 'pyrsn', 'filestat', 
+  'a_wkslk', 'hrswk', 'agi', 'tax_inc', 'peioocc', 'a_wksch', 'wemind', 'hprop_val','housret', 'prop_tax','fhoussub', 'fownu18', 'fpersons','fspouidx', 'prcitshp', 'gestfips','marsupwt','a_age','wsal_val','semp_val','frse_val',
+                  'ss_val','rtm_val','div_val','oi_off','oi_val','uc_yn','uc_val', 'int_yn', 'int_val','pedisdrs', 'pedisear', 'pediseye', 
+                    'pedisout', 'pedisphy', 'pedisrem','a_sex','peridnum','h_seq','fh_seq', 'ffpos', 'fsup_wgt',
+                        'hlorent', 'hpublic', 'hsup_wgt', 'hfdval', 'fmoop', 'f_mv_fs', 'pppos', 'a_famrel', 'a_ftpt']
+CPS_dataset = CPS_dataset[columns_to_keep]
+CPS_dataset = CPS_dataset.replace({'None or not in universe' : 0}, regex = True)
+CPS_dataset = CPS_dataset.replace({'Not in universe' : 0}, regex = True)
+CPS_dataset = CPS_dataset.replace({'Not in Universe' : 0}, regex = True)
+CPS_dataset = CPS_dataset.replace({'NIU' : 0}, regex = True)
+CPS_dataset = CPS_dataset.replace({'None' : 0}, regex = True)
 # CPS_dataset.to_csv('CPS_UI.csv', index=False)
-CPS_dataset = pd.read_csv('CPS_UI.csv')
+# CPS_dataset = pd.read_csv('CPS_UI.csv')
 CPS_dataset = CPS_dataset.replace({'Not in Universe' : 0}, regex = True)
 
 #recipient or not of Unemployment Insurance Compensation
