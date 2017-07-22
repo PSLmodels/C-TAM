@@ -49,6 +49,7 @@ columns_to_keep = ['lkweeks', 'lkstrch', 'weuemp', 'wkswork', 'a_explf', 'a_lfsr
                         'hlorent', 'hpublic', 'hsup_wgt', 'hfdval', 'fmoop', 'f_mv_fs', 'pppos', 'a_famrel', 'a_ftpt']
 CPS_dataset = CPS_dataset[columns_to_keep]
 CPS_dataset = CPS_dataset.replace({'None or not in universe' : 0}, regex = True)
+CPS_dataset = CPS_dataset.replace({'Not in universe' : 0}, regex = True)
 CPS_dataset = CPS_dataset.replace({'Not in Universe' : 0}, regex = True)
 CPS_dataset = CPS_dataset.replace({'NIU' : 0}, regex = True)
 CPS_dataset = CPS_dataset.replace({'None' : 0}, regex = True)
