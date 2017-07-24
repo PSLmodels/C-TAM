@@ -1,3 +1,4 @@
+# coding: utf-8
 import pandas as pd
 import numpy as np
 import csv
@@ -37,6 +38,7 @@ def read_data():
 							usecols=["gestcen", "gestfips", "marsupwt", "ss_yn", "sskidyn", "ss_val", "dis_hp", "a_maritl",
 								 "a_age", "a_hga", "peridnum", "a_sex",  'uc_yn','wc_yn', 'ssi_yn', 'vet_yn', 'paw_yn',
 								 'sur_yn', 'hed_yn', 'hcsp_yn', 'hfdval', 'mcare', 'mcaid'])
+
 	cps_alldata.rename(columns = {'gestcen':'State'}, inplace = True)
 
 	ssa_data = pd.read_csv("SSA_Compiled.csv", header=0).set_index("State")
@@ -141,7 +143,7 @@ def impute(cps_alldata, ssa_data):
 	cps_recipients = cps_trimmed[cps_alldata["ss_yn"] == "Yes"]
 
 	#Gets nonrecipients and sorts them by state and likelihood of getting ss
-	nonrecipients = (cps_trimmed[cps_trimmed["ss_yn"] != "Yes"]).sort(columns=['State', 'Prob_Received'], ascending=[True,False])
+	nonrecipients = (cps_trimmed[cps_trimmed["ss_yn"] != "Yes"]).sort_values(by=['State', 'Prob_Received'], ascending=[True,False])
 
 
 	#Converting to monthly values and summing across states
@@ -209,9 +211,13 @@ def impute(cps_alldata, ssa_data):
 	total_before_adjustment = (imputed_combined.ss_val * imputed_combined.marsupwt).sum()
 	ratio = []
 	imputed_combined['ss_val'] = imputed_combined['ss_val'] * AveBen2014_MonthlySSA * 12/total_before_adjustment
+	imputed_combined = imputed_combined.append(nonimputed)
+	imputed_combined = imputed_combined.sort_values(by='Prob_Received')
 
 	#Getting final results and exporting to csv
 	imputed_grouped = imputed_combined.groupby('State').sum()
+	combined_data.columns = ['CPS Weighted Recipients', 'CPS Benefit per Recipient', 'Weighted Benefits', 'SSA_Recipients',\
+	 						 'SSA_Benefit', 'Recipients Gap', 'Benefits Gap', 'Ajusted monthly benefit']	
 	combined_data['Imputed Monthly Benefit'] = avemonbensimputed
 	combined_data['CPS + Imputed Recipients'] = imputed_grouped['marsupwt']
 	combined_data['CPS + Imputed Benefits'] = imputed_grouped['ss_wtt']
