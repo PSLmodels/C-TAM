@@ -1,8 +1,10 @@
 ''' This script creates the administrative data used for imputation'''
 
 ''' You can find WICAgencies2014ytd.xls at https://www.fns.usda.gov/pd/wic-program. 
-Download the Monthly Data – State Level Participation by Category and Program Costs, 
-data corresponding to your year'''
+Download the Monthly Data - State Level Participation by Category and Program Costs, 
+data corresponding to your year, to include administrative costs, refer use also 
+the Nut. Services & Admin Costs excel sheet from the excel file below.
+The "Rebates Received" sheet in the data sheet refers to the totals from the WIC Infant Formula Rebate Program '''
 
 import numpy as np
 import pandas as pd
@@ -10,12 +12,13 @@ import re
 
 xls = pd.ExcelFile('WICAgencies2014ytd.xls')
 tot_infants = xls.parse('Total Infants',header = 1 ,skiprows = 3)
-tot_infants = tot_infants.rename(columns = {'State Agency or Indian Tribal Organization' : 'State'})
+tot_infants = tot_infants.rename(columns = {'State Agency or Indian Tribal Organization' : 'state'})
 tot_children = xls.parse('Children Participating', header = 1, skiprows = 3)
-tot_children = tot_children.rename(columns = {'State Agency or Indian Tribal Organization' : 'State'})
+tot_children = tot_children.rename(columns = {'State Agency or Indian Tribal Organization' : 'state'})
 tot_women = xls.parse('Total Women', header = 1, skiprows = 3)
-tot_women = tot_women.rename(columns = {'State Agency or Indian Tribal Organization' : 'State'})
-
+tot_women = tot_women.rename(columns = {'State Agency or Indian Tribal Organization' : 'state'})
+benefits_received = xls.parse('Food Costs',header = 1 ,skiprows = 3)
+benefits_received = benefits_received.rename(columns = {'State Agency or Indian Tribal Organization' : 'state'})
 
 states = {
         'AK': 'Alaska','AL': 'Alabama','AR': 'Arkansas','AZ': 'Arizona',
@@ -36,35 +39,50 @@ fips = [1,2,4,5,6,8,9,10,11,12,13,15,16,17,18,19,20,21,22,23,24,
 
 
 tot_infants = tot_infants.replace(states, regex = True)
-tot_infants['State_indian'] = tot_infants['State'].str.split(',').str[1]
+tot_infants['State_indian'] = tot_infants['state'].str.split(',').str[1]
 indian_res = tot_infants.dropna(0)['State_indian']
 indian_res[(indian_res == ' Caddo & Delaware (WCD)')] = 'Oklahoma'
 indian_res[(indian_res == ' Canoncito & Laguna')] = 'New Mexico'
-tot_infants.loc[indian_res.index, "State"] = indian_res
-tot_infants.State = tot_infants['State'].str.strip()
-tot_infants = tot_infants[tot_infants['State'].isin(states.values())]
-tot_infants = tot_infants.groupby(['State'])['Average Participation'].sum().astype(int)
+tot_infants.loc[indian_res.index, "state"] = indian_res
+tot_infants.state = tot_infants['state'].str.strip()
+tot_infants = tot_infants[tot_infants['state'].isin(states.values())]
+tot_infants = tot_infants.groupby(['state'])['Average Participation'].sum().astype(int)
+tot_infants = tot_infants.rename('total_infants')
 
 tot_children = tot_children.replace(states, regex = True)
-tot_children['State_indian'] = tot_children['State'].str.split(',').str[1]
+tot_children['State_indian'] = tot_children['state'].str.split(',').str[1]
 indian_res = tot_children.dropna(0)['State_indian']
 indian_res[(indian_res == ' Caddo & Delaware (WCD)')] = 'Oklahoma'
 indian_res[(indian_res == ' Canoncito & Laguna')] = 'New Mexico'
-tot_children.loc[indian_res.index, "State"] = indian_res
-tot_children.State = tot_children['State'].str.strip()
-tot_children = tot_children[tot_children['State'].isin(states.values())]
-tot_children = tot_children.groupby(['State'])['Average Participation'].sum().astype(int)
+tot_children.loc[indian_res.index, "state"] = indian_res
+tot_children.state = tot_children['state'].str.strip()
+tot_children = tot_children[tot_children['state'].isin(states.values())]
+tot_children = tot_children.groupby(['state'])['Average Participation'].sum().astype(int)
+tot_children = tot_children.rename('total_children')
 
 tot_women = tot_women.replace(states, regex = True)
-tot_women['State_indian'] = tot_women['State'].str.split(',').str[1]
+tot_women['State_indian'] = tot_women['state'].str.split(',').str[1]
 indian_res = tot_women.dropna(0)['State_indian']
 indian_res[(indian_res == ' Caddo & Delaware (WCD)')] = 'Oklahoma'
 indian_res[(indian_res == ' Canoncito & Laguna')] = 'New Mexico'
-tot_women.loc[indian_res.index, "State"] = indian_res
-tot_women.State = tot_women['State'].str.strip()
-tot_women = tot_women[tot_women['State'].isin(states.values())]
-tot_women = tot_women.groupby(['State'])['Average Participation'].sum().astype(int)
+tot_women.loc[indian_res.index, "state"] = indian_res
+tot_women.state = tot_women['state'].str.strip()
+tot_women = tot_women[tot_women['state'].isin(states.values())]
+tot_women = tot_women.groupby(['state'])['Average Participation'].sum().astype(int)
+tot_women = tot_women.rename('total_women')
 
-tot_infants.to_csv('Admin_totals_infants.csv')
-tot_women.to_csv('Admin_totals_women.csv')
-tot_children.to_csv('Admin_totals_children.csv')
+benefits_received = benefits_received.replace(states, regex = True)
+benefits_received['State_indian'] = benefits_received['state'].str.split(',').str[1]
+indian_res = benefits_received.dropna(0)['State_indian']
+indian_res[(indian_res == ' Caddo & Delaware (WCD)')] = 'Oklahoma'
+indian_res[(indian_res == ' Canoncito & Laguna')] = 'New Mexico'
+benefits_received.loc[indian_res.index, "state"] = indian_res
+benefits_received.state = benefits_received['state'].str.strip()
+benefits_received = benefits_received[benefits_received['state'].isin(states.values())]
+benefits_received = benefits_received.groupby(['state'])['Cumulative Cost'].sum().astype(int)
+benefits_received = benefits_received.rename('total_benefits')
+
+final = pd.concat([tot_infants, tot_women, tot_children, benefits_received], axis = 1).reset_index()
+final = final.sort_values('state')
+final['Fips'] = fips
+final.to_csv('Admin_totals_all.csv')
