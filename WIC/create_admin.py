@@ -85,4 +85,12 @@ benefits_received = benefits_received.rename('total_benefits')
 final = pd.concat([tot_infants, tot_women, tot_children, benefits_received], axis = 1).reset_index()
 final = final.sort_values('state')
 final['Fips'] = fips
+final['total_recipients'] = final.total_infants + final.total_women + final.total_children
+final['Avg_benefit'] = final['total_benefits'] / final['total_recipients']
+final['Avg_benefit'] *= 10000
+final['Avg_benefit'] = final['Avg_benefit'].astype(int)
+final['Avg_benefit'] /= 10000
+final['tot_infant_benefits'] = final['total_infants'] * final['Avg_benefit']
+final['tot_child_benefits'] = final['total_children'] * final['Avg_benefit']
+final['tot_woman_benefits'] = final['total_women'] * final['Avg_benefit']
 final.to_csv('Admin_totals_all.csv')
