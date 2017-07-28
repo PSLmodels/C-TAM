@@ -1,25 +1,21 @@
 '''                                 
 About: 
     This script imputes Women, Infants and Children (WIC) participation. 
-    We exclude Extended Benefits (EB) since its totals are negligible relative to the regular program totals (<.1 %).
-    We impute UI recipients, and their dollar benefit amount to match the aggregates with United States Department of 
-    Labor (DOL) statistics for these programs. In this current version, we used 2015 CPS data since its UI question 
-    refers to 2014 UI reception, and DOL's "ETA 5195" dataset using all UI program totals (state, UCX, UCFE) 
-    for the regular UI, and State UI program totals for workshare. Please refer to the documentation in the same folder 
+     Please refer to the documentation in the same folder 
     for more details on methodology and assumptions. The output this script is a personal level dataset that contains CPS
-    individual participation indicator (UI participationc, 0 - not a recipient, 
+    individual participation indicator for women, infants, and children seperately (WIC participationc, 0 - not a recipient, 
     1 - current recipient on file, 2 - imputed recipient), and benefit amount.
 
 Input: 
-    2014 CPS (cpsmar2014t.csv), number of recipients and their benefits amount by state in 2014 (Administrative.csv),
-    rf_probs.csv from Rf_probs.ipynb.
+    2015 CPS (asec2015_pubuse.csv), number of recipients and their benefits amount by state in 2014 (Administrative.csv),
+    rf_probs.csv from Rf_probs.py.
 
 Output: 
-    UI_Imputation.csv, and UI_Imputation_rf.csv (imputation using random forest probabilities as well)
+    WIC_Imputation.csv, and WIC_Imputation_rf.csv for women, infants, and children seperately (imputation using random forest probabilities as well)
  
 Additional Source links: 
-    DOL CY 2014 administrative data at https://workforcesecurity.doleta.gov/unemploy/DataDownloads.asp 
-    (ETA 5195, both Regular and Worshare programs )
+    USDA FY 2014 administrative data at https://www.fns.usda.gov/pd/wic-program 
+    (download FY 2014 (final) from the monthy program and benefit section )
 '''
 import pandas as pd
 from pandas import DataFrame
@@ -39,26 +35,23 @@ Rf_probs_women = np.loadtxt('rf_probs_women.csv')
 
 
 # Variables we use in CPS:
-# CPS_dataset = pd.read_csv('/home/parker/Documents/AEI/Benefits/UI/asec2015_pubuse.csv')
-# columns_to_keep = ['a_pfrel', 'rsnnotw', 'hfoodsp','ch_mc', 'hh5to18', 'fownu6', 'caid', 
-# 'frelu6', 'cov_hi', 'fwsval', 'mcaid','hrwicyn','wicyn','oi_off','paw_yn','paw_typ','paw_val', 
-#   'agi', 'tax_inc', 'peioocc', 'a_wksch', 'wemind', 'hprop_val','housret', 'prop_tax','fhoussub', 'fownu18', 'fpersons','fspouidx', 'prcitshp', 'gestfips','marsupwt','a_age','wsal_val','semp_val','frse_val',
-#                   'ss_val','rtm_val','div_val','oi_off','oi_val','uc_yn','uc_val', 'int_yn', 'int_val','pedisdrs', 'pedisear', 'pediseye', 
-#                     'pedisout', 'pedisphy', 'pedisrem','a_sex','peridnum','h_seq','fh_seq', 'ffpos', 'fsup_wgt',
-#                         'hlorent', 'hpublic', 'hsup_wgt', 'hfdval', 'f_mv_fs', 'a_famrel', 'a_ftpt']
-# CPS_dataset = CPS_dataset[columns_to_keep]
-# CPS_dataset = CPS_dataset.replace({'None or not in universe' : 0}, regex = True)
-# CPS_dataset = CPS_dataset.replace({'Not in universe' : 0}, regex = True)
-# CPS_dataset = CPS_dataset.replace({'NIU' : 0}, regex = True)
-# CPS_dataset = CPS_dataset.replace({'None' : 0}, regex = True)
-
+CPS_dataset = pd.read_csv('asec2015_pubuse.csv')
+columns_to_keep = ['a_pfrel', 'rsnnotw', 'hfoodsp','ch_mc', 'hh5to18', 'fownu6', 'caid', 
+'cov_hi', 'fwsval', 'mcaid','hrwicyn','wicyn','oi_off','paw_yn','paw_typ','paw_val', 
+  'agi', 'tax_inc', 'peioocc', 'a_wksch', 'wemind', 'hprop_val','housret', 'prop_tax','fhoussub', 'fownu18', 'fpersons','fspouidx', 'prcitshp', 'gestfips','marsupwt','a_age','wsal_val','semp_val','frse_val',
+                  'ss_val','rtm_val','div_val','oi_off','oi_val','uc_yn','uc_val', 'int_yn', 'int_val','pedisdrs', 'pedisear', 'pediseye', 
+                    'pedisout', 'pedisphy', 'pedisrem','a_sex','peridnum','h_seq','fh_seq', 'ffpos', 'fsup_wgt',
+                        'hlorent', 'hpublic', 'hsup_wgt', 'hfdval', 'f_mv_fs', 'a_famrel', 'a_ftpt']
+CPS_dataset = CPS_dataset[columns_to_keep]
+CPS_dataset = CPS_dataset.replace({'None or not in universe' : 0}, regex = True)
+CPS_dataset = CPS_dataset.replace({'Not in universe' : 0}, regex = True)
+CPS_dataset = CPS_dataset.replace({'NIU' : 0}, regex = True)
+CPS_dataset = CPS_dataset.replace({'None' : 0}, regex = True)
 # CPS_dataset.to_csv('CPS_WIC.csv', index=False)
-CPS_dataset = pd.read_csv('CPS_WIC.csv')
+# CPS_dataset = pd.read_csv('CPS_WIC.csv')
 
-# From 2014 since 2015 questions deal with 2014
-# SPM_dataset = pd.read_stata('spmresearch2014new.dta')
 
-#recipient or not of Unemployment Insurance Compensation
+#recipient or not of WIC
 CPS_dataset.wicyn = np.where(CPS_dataset.wicyn == 'Did not receive WIC', 0, CPS_dataset.wicyn)
 CPS_dataset.wicyn = np.where(CPS_dataset.wicyn == 'Received WIC', 1, CPS_dataset.wicyn)
 CPS_dataset.wicyn = CPS_dataset.wicyn.astype(int)
@@ -91,8 +84,8 @@ CPS_dataset['fwicyn'] = 0
 CPS_dataset.loc[positive, 'fwicyn'] = 1
 CPS_dataset = CPS_dataset.reset_index()
 
-#Including only moms with infants from 0-1 years old and pregnant moms (no children under 5 in household)
-CPS_dataset['infant'] = np.where(CPS_dataset.a_age <= 1,  1, 0)
+#Including only moms with infants 0 years old and pregnant moms (no children under 5 in household)
+CPS_dataset['infant'] = np.where(CPS_dataset.a_age < 1,  1, 0)
 CPS_dataset['child'] = np.where(CPS_dataset.a_age <= 5, 1 , 0)
 infants = CPS_dataset.groupby(['fh_seq', 'ffpos'])['infant'].sum()
 children = CPS_dataset.groupby(['fh_seq', 'ffpos'])['child'].sum()
@@ -104,25 +97,13 @@ CPS_dataset.loc[no_children ,'lactating_or_pregnant_mom'] = 1
 CPS_dataset.loc[has_infant ,'lactating_or_pregnant_mom'] = 1
 CPS_dataset = CPS_dataset.reset_index()
 
+# Giving eligible children the benefit
 CPS_dataset['eligible_children'] = np.where((CPS_dataset.a_age <= 4) & (CPS_dataset.fwicyn == 1), 1, 0)
 CPS_dataset['old_wic'] = CPS_dataset['wicyn']
 CPS_dataset['wicyn'] = np.where((CPS_dataset.eligible_children == 1) | ((CPS_dataset.lactating_or_pregnant_mom == 1) & (CPS_dataset.wicyn == 1)), 1 , 0)
 CPS_dataset['WIC_infant'] = np.where((CPS_dataset.wicyn == 1) & (CPS_dataset.a_age == 0), 1, 0)
 CPS_dataset['WIC_child'] = np.where((CPS_dataset.wicyn == 1) & (CPS_dataset.a_age <= 4) & (CPS_dataset.a_age >= 1), 1, 0)
 CPS_dataset['WIC_woman'] = np.where((CPS_dataset.wicyn == 1) & (CPS_dataset.a_age >= 15), 1, 0)
-
-# HRNUMWIC is just how many women with wicyn = 1 in the household (could be two or more in a household since two + families in a household)
-
-# print CPS_dataset[(CPS_dataset.wicyn > 0) | (CPS_dataset.old_wic > 0)][['hrnumwic', 'ffpos', 'fh_seq', 'old_wic', 'wicyn','a_age']]
-# CPS_dataset['WIC_infant'].to_csv('WIC_infant.csv', index = False, header = "infants")
-# CPS_dataset['WIC_child'].to_csv('WIC_child.csv', index = False, header = "children")
-# CPS_dataset['WIC_woman'].to_csv('WIC_woman.csv', index = False, header = "women")
-# print CPS_dataset[CPS_dataset.wicyn > 0][['fh_seq', 'ffpos', 'a_age', 'a_sex', 'a_famrel', 'eligible_children']]
-# print CPS_dataset[CPS_dataset.wicyn > 0]['marsupwt'].sum()
-# print CPS_dataset[CPS_dataset.WIC_infant > 0]['marsupwt'].sum()
-# print CPS_dataset[CPS_dataset.WIC_child > 0]['marsupwt'].sum()
-# print CPS_dataset[CPS_dataset.WIC_woman > 0]['marsupwt'].sum()
-
 
 #Earned income
 p_earned = CPS_dataset.wsal_val.astype(int) + CPS_dataset.semp_val.astype(int) + CPS_dataset.frse_val.astype(int) #individual earned income
@@ -152,12 +133,11 @@ CPS_dataset.cov_hi = CPS_dataset.cov_hi.astype(int)
 CPS_dataset.hfoodsp = np.where((CPS_dataset.hfoodsp == 'No'), 0, CPS_dataset.hfoodsp)
 CPS_dataset.hfoodsp = np.where(CPS_dataset.hfoodsp == 'Yes', 1, CPS_dataset.hfoodsp)
 CPS_dataset.hfoodsp = CPS_dataset.hfoodsp.astype(int)
-# 'a_pfrel', 'rsnnotw',
 CPS_dataset.hfdval = np.where((CPS_dataset.hfdval > 0), 1, CPS_dataset.hfdval)
 
 CPS_dataset.a_pfrel = np.where(CPS_dataset.a_pfrel == 'Wife', 1, 0)
+CPS_dataset.rsnnotw = np.where((CPS_dataset.rsnnotw == 'Taking care of home or family'), 1, 0)
 
-CPS_dataset.rsnnotw = np.where(CPS_dataset.rsnnotw == 'Taking care of home or family', 1, 0)
 
 CPS_dataset.caid = np.where(CPS_dataset.caid == 'Yes', 1, 0)
 
@@ -198,12 +178,6 @@ CPS_dataset.disability = np.where(CPS_dataset.pedisout == 'Yes', 1, CPS_dataset.
 CPS_dataset.disability = np.where(CPS_dataset.pedisphy == 'Yes', 1, CPS_dataset.disability)
 CPS_dataset.disability = np.where(CPS_dataset.pedisrem == 'Yes', 1, CPS_dataset.disability)
 
-
-# Corresponds to random forest probabilities that they received WIC compensation
-# 'ch_mc', 'hh5to18', 'm5gsame', 'fownu6', 'caid', 
-# 'frelu6', 'm5g_mtr3', 'm5g_mtr4', 'm5g_cbst', 'cov_hi', 'i_caid', 
-# 'hfdval', 'hfdval_missing_NotIn', 'dis_hp_missing_NotIn', 'm5g_st', 
-# 'wemind', 'fwsval', 'fam_earned_income', 'm5g_mtr1', 'mcaid', 'i_mig1',
 
 #Regression
 CPS_dataset['intercept'] = np.ones(len(CPS_dataset))
@@ -702,8 +676,9 @@ CPS_dataset['has_child'] = np.where(CPS_dataset.fownu6 > 0 , 1 , 0 )
 CPS_dataset['has_child_relative'] = np.where(CPS_dataset.frelu6 > 0 , 1 , 0 )
 
 CPS_dataset['woman'] = np.where((CPS_dataset.a_age >= 15) & (CPS_dataset.a_age <= 44) & (CPS_dataset.a_sex == 'Female'), 1, 0)
-model = sm.Logit(endog = CPS_dataset.indicator, exog = CPS_dataset[['intercept', 'rsnnotw' ,'has_child_relative' , 'has_child','hfdval','cov_hi' , 'income_eligibility', 'woman', 'fwsval' ]])
+model = sm.Logit(endog = CPS_dataset.indicator, exog = CPS_dataset[['intercept', 'rsnnotw' , 'has_child','hfdval','caid' , 'income_eligibility', 'woman', 'fwsval' ]])
 logit_res = model.fit()
+print logit_res.summary()
 probs = logit_res.predict()
 CPS_dataset['probs'] = probs
 
