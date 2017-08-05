@@ -1,14 +1,14 @@
-# coding: utf-8
 import pandas as pd
 import numpy as np
 import csv
 import statsmodels.discrete.discrete_model as sm
 import statsmodels
+import copy
 
 """
 Description:
-This script generates imputed recipients to receive Social Security Benefits 
-to match the CPS 2014 March totals with SSA December 2014 totals. 
+This script generates imputed recipients to receive Social Security Benefits
+to match the CPS 2014 March totals with SSA December 2014 totals.
 
 Output:
 The output comes in 2 csv files:
@@ -33,12 +33,15 @@ AveBen2014_MonthlySSA = 70703666667
 
 
 def read_data():
+	codes = pd.read_csv('statecodes.csv')
+	codes.index = codes['gestfips']
 
-	cps_alldata = pd.read_csv("/Users/Amy/Dropbox/OSPC - Shared/CPS/cpsmar2014t.csv", header=0, \
-							usecols=["gestcen", "gestfips", "marsupwt", "ss_yn", "sskidyn", "ss_val", "dis_hp", "a_maritl",
+	cps_alldata = pd.read_csv("../../../Dropbox/asec2015_pubuse.csv", header=0, \
+							usecols=["gestfips", "marsupwt", "ss_yn", "sskidyn", "ss_val", "dis_hp", "a_maritl",
 								 "a_age", "a_hga", "peridnum", "a_sex",  'uc_yn','wc_yn', 'ssi_yn', 'vet_yn', 'paw_yn',
 								 'sur_yn', 'hed_yn', 'hcsp_yn', 'hfdval', 'mcare', 'mcaid'])
-
+	cps_alldata['gestcen'] = codes['State'][cps_alldata['gestfips']].values
+	cps_alldata = cps_alldata.fillna(0.)
 	cps_alldata.rename(columns = {'gestcen':'State'}, inplace = True)
 
 	ssa_data = pd.read_csv("SSA_Compiled.csv", header=0).set_index("State")
@@ -125,7 +128,7 @@ def regression(cps_alldata):
 	model = sm.Logit(endog=cps_alldata.ss_indicator, exog=cps_alldata[['Aged_yn', 'Disabled_yn', 'Widowed_yn', 'ssi_yn', 'sur_yn', 'vet_yn',
 									   'paw_yn','hed_yn', 'hcsp_yn', 'hfdval', 'mcare', 'mcaid','uc_yn','wc_yn',
 									   'intercept']])
-	
+
 	results = model.fit()
 	print results.summary()
 	ypred = results.predict()
@@ -149,11 +152,10 @@ def impute(cps_alldata, ssa_data):
 	#Converting to monthly values and summing across states
 	cps_recipients['ss_wtt'] /= 12
 	cps_grouped = cps_recipients.groupby('State').sum()
-	
+
 	# Combining cps and ssa totals (monthly) into one dataframe
 	combined_data = cps_grouped.join(ssa_data)
 	combined_data = combined_data.drop(['ss_indicator', 'Prob_Received'], axis=1)
-
 
 	#Scaling to account for December being higher than rest of year
 	combined_data['SSA_Benefit'] *= AveBen2014_MonthlySSA/float(combined_data['SSA_Benefit'].sum())
@@ -211,19 +213,14 @@ def impute(cps_alldata, ssa_data):
 	total_before_adjustment = (imputed_combined.ss_val * imputed_combined.marsupwt).sum()
 	ratio = []
 	imputed_combined['ss_val'] = imputed_combined['ss_val'] * AveBen2014_MonthlySSA * 12/total_before_adjustment
-	imputed_combined = imputed_combined.append(nonimputed)
-	imputed_combined = imputed_combined.sort_values(by='Prob_Received')
 
 	#Getting final results and exporting to csv
 	imputed_grouped = imputed_combined.groupby('State').sum()
-	combined_data.columns = ['CPS Weighted Recipients', 'CPS Benefit per Recipient', 'Weighted Benefits', 'SSA_Recipients',\
-	 						 'SSA_Benefit', 'Recipients Gap', 'Benefits Gap', 'Ajusted monthly benefit']	
 	combined_data['Imputed Monthly Benefit'] = avemonbensimputed
 	combined_data['CPS + Imputed Recipients'] = imputed_grouped['marsupwt']
 	combined_data['CPS + Imputed Benefits'] = imputed_grouped['ss_wtt']
 	# print (imputed_combined.ss_val * imputed_combined.marsupwt).sum()
-
-	imputed_combined[['peridnum','ss_val', 'Participation']].to_csv("SS_augmentation.csv", sep=',')
+	imputed_combined[['peridnum','ss_val', 'Participation', 'Prob_Received']].to_csv("SS_augmentation.csv", sep=',')
 	combined_data.to_csv("ByState.csv", sep=',')
 
 
@@ -234,4 +231,3 @@ cps_alldata = addnewvars(cps_alldata)
 cps_alldata = regression(cps_alldata)
 
 impute(cps_alldata, ssa_data)
-
