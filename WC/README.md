@@ -13,9 +13,9 @@ claims per 100,000 insured comes from claims_projected, which is calculated in a
 Even though these WC totals are not state level specific, we use them since they seem
 to be the best estimate for WC administrative totals available; thus, we do not impute on the state
 level, rather on the national level using the NASI data.
-We had to project claims claims to 2014 since we did not have 2014 claim data from NASI. For more information on how we projected these claims, and data origins please see documentation _WIC\_Impuation\_Report.pdf_.
+We had to project claims to 2014 since we did not have 2014 claim data from NASI. For more information on how we projected these claims, and data origins please see documentation _WC\_Impuation\_Report.pdf_.
 
-We use the 2015 CPS because the WC variables, WC\_YN and WC\_VAL, report the respondents' unemployment
+We use the 2015 CPS because the WC variables, WC\_YN and WC\_VAL, report the respondents' worker's
 compensation and recipiency for the calendar year 2014, rather than 2015.
 
 
@@ -28,10 +28,10 @@ practices.
 
 We use calendar year administrative totals because the CPS WC compensation is reported according
 to calendar year. In the calendar year 2014, administrative data suggests that approximately 3.9
-million individuals claimed roughly 62.3 billion dollars in WC benefits. The annual average benefit
+million individuals claimed roughly $62.3 billion dollars in WC benefits. The annual average benefit
 for each recipient is approximately $15,833.
 
-Correspondingly, 2015 CPS totals indicate that around 955,469 individuals claimed roughly 9.8 billion in WC benefits. This underreporting is typical of government benefit program questions on the CPS, although this is rather extreme.
+Correspondingly, 2015 CPS totals indicate that around 955,469 individuals claimed roughly $9.8 billion in WC benefits. This underreporting is typical of government benefit program questions on the CPS, although this is rather extreme.
 
 
 ## Imputation Procedure
@@ -51,7 +51,7 @@ Before running the imputation procedure, one must do two things (besides downloa
 
 ## Imputing Recipients
 
-We follow create other variables that correspond to WC eligibility rules, as described in our documentation, to increase the predictive power of our logistic regression.
+We create other variables that correspond to WC eligibility rules, as described in our documentation, to increase the predictive power of our logistic regression.
 
 We then use the following logistic regression to determine the likelihood of an individual
 participating in the program:
