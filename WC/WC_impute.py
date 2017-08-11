@@ -35,12 +35,12 @@ Avg_benefit *= 10000
 Avg_benefit = int(Avg_benefit)
 Avg_benefit /= 10000.
 
-# Random Forest probabilities of receiving UI compensation. 'rf_probs.csv' obtained from rf_probs.ipynb.
+# Random Forest probabilities of receiving WC compensation. 'rf_probs.csv' obtained from rf_probs.ipynb.
 Rf_probs = np.loadtxt('rf_probs.csv')
 
 
 # Variables we use in CPS:
-CPS_dataset = pd.read_csv('/home/parker/Documents/AEI/Benefits/UI/asec2015_pubuse.csv')
+CPS_dataset = pd.read_csv('asec2015_pubuse.csv')
 columns_to_keep = ['a_whyabs','a_mjind','chsp_val','dis_hp','dis_cs','finc_dis', 'fdisval','dis_yn','wc_yn', 'wc_val','a_pfrel', 'rsnnotw', 'hfoodsp','ch_mc','caid', 
 'cov_hi', 'fwsval', 'mcaid','hrwicyn','wicyn','oi_off','paw_yn','paw_typ','paw_val', 
 'peioocc', 'a_wksch', 'wemind', 'prcitshp', 'gestfips','marsupwt','a_age','wsal_val','semp_val','frse_val',
@@ -94,6 +94,7 @@ CPS_dataset.cov_hi = CPS_dataset.cov_hi.astype(int)
 #Regression 
 dummies = pd.get_dummies(CPS_dataset['a_mjind'], drop_first=True)
 CPS_dataset = pd.concat([CPS_dataset, dummies], axis=1)
+# Make it so most likely age to receive is mid forties
 CPS_dataset['age_squared'] = ((CPS_dataset.a_age - 47) * (CPS_dataset.a_age - 47)) * -1
 CPS_dataset['intercept'] = np.ones(len(CPS_dataset))
 CPS_dataset['indicator'] = CPS_dataset.wc_yn
@@ -125,7 +126,7 @@ pre_augment_benefit['CPS benefits (annually)'] = pre_augment_benefit['CPS benefi
 pre_augment_benefit['CPS total recipients'] = pre_augment_benefit['CPS total recipients'].astype(int)
 pre_augment_benefit.to_csv('admin_cps_totals_before.csv')
 
-# caculate difference of UI stats and CPS aggregates on recipients number
+# caculate difference of WC stats and CPS aggregates on recipients number
 # by state
 diff = {'Fips':[],'Difference in Population':[],'Mean Benefit':[],'CPS Population':[],'WIC Population':[]}
 diff['Fips'] = "USA"
