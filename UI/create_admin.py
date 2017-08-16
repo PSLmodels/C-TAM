@@ -78,5 +78,4 @@ Admin_totals = Admin_totals.reset_index(drop = True)
 Admin_totals = Admin_totals.sort_values('state')
 Admin_totals['Fips'] = fips
 Admin_totals[['tot_UI_outlays', 'tot_UI_recipients']] = Admin_totals[['tot_UI_outlays', 'tot_UI_recipients']].astype(int)
-print Admin_totals['tot_UI_outlays'].sum() / float(Admin_totals['tot_UI_recipients'].sum())
 Admin_totals.to_csv('Admin_totals_all.csv')
