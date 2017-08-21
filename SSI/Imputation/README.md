@@ -1,7 +1,6 @@
 # Supplemental Security Income Imputation
 
-The Social Security Administration (SSA) reported 9.3 million SSI participants in 2014, amounting to $55 billion in federal benefits and $4.6 billion in state-administered benefits.
-The raw 2014 CPS reports just 6.1 million participants receiving $47.1 billion in benefits. Accordingly, we estimate that SSI participation is under reported by at most 3.1 million and SSI benefits are underreported by, at most, $12.5 billion.
+The Social Security Administration (SSA) reported 9.3 million SSI participants in 2014, amounting to $55 billion in federal benefits and $4.6 billion in state-administered benefits. The raw 2015 CPS reports just 6.8 million participants receiving $61.2 billion in benefits. Accordingly, we estimate that SSI participation is under reported by at most 2.5 million and SSI benefits are over reported by, at most, $1.6 billion.
 
 ## CPS Micro-Data and SSA Targets
 In the SSI section of the CPS March Supplement, each respondent marked as a recipient of SSI also reports the total benefit they and their child receives.
