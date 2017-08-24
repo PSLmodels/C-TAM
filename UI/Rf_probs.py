@@ -151,7 +151,7 @@ CPS_dataset.disability = np.where(CPS_dataset.pedisphy == 1, 1, CPS_dataset.disa
 CPS_dataset.disability = np.where(CPS_dataset.pedisrem == 1, 1, CPS_dataset.disability)
 
 
-Rf = rf(n_estimators = 200, min_samples_leaf = 6, max_depth = 5) # Creating Random Forest 
+Rf = rf(n_estimators = 200) # Creating Random Forest 
 CPS_use = CPS_dataset.drop('peridnum', 1)
 
 #Splitting data into training and test sets
