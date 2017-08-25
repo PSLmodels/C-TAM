@@ -20,7 +20,6 @@ and benefit) are less than 0.1% of the regular and Workshare UI totals, and thes
 phased out by 2014
 
 
-
 In the calendar year 2014 (we use calendar year because CPS respondents report UI claims for calendar year), according to _ETA 5195_ and _ETA 539_ 10 million individuals claimed roughly 35.7 billion dollars in UI benefits (for all programs). The annual average combined benefit for each
 recipient is approximately $3,410 with significant variation across states.
 
@@ -41,7 +40,6 @@ Before running the imputation procedure, one must do two things (besides downloa
 - This creates the Random Forest Classifer probabilities used in the imputation labeled as _rf\_probs.csv_. 
 
 2. Run _create\_admin.py_ with the appropriate [DOL administrative data](https://workforcesecurity.doleta.gov/unemploy/DataDownloads.asp) already downloaded into the imputation script location.  (refer to documentation for more information).
-
 - Download _aw5159.csv_, _ar5159.csv_, and _ar539.csv_ (this last file is from ETA 539). This creates the administrative data in the file _Admin\_totals\_all.csv_ used in the imputation.
 
 

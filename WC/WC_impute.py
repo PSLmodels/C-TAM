@@ -219,8 +219,10 @@ df.to_csv('post_augment_adminCPS_totals.csv')
 
 
 '''Using Random Forest probabilities'''
-
+# RF probabilities predicted with 85% accuracy those receiving WC in the test set, and with 99% accuracy 
+# everyone including those who didn't receive WC
 CPS_dataset['RfYes'] = Rf_probs[:, 1]
+
 probs = CPS_dataset['RfYes']
 
 CPS_dataset['impute'] = np.zeros(len(CPS_dataset))
