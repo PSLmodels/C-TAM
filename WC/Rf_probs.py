@@ -1,4 +1,3 @@
-
 import pandas as pd
 from pandas import DataFrame
 import numpy as np
@@ -75,6 +74,7 @@ def Init_CPS_Vars(CPS):
     CPS = CPS.replace({'Did not receive SSI' : 0.}, regex = True)
     CPS = CPS.replace({'Received SSI' : 1.}, regex = True)
     CPS = CPS.replace({'No' : 0.}, regex = True)
+
     # Creating unearned income variable
     CPS_unearned = (CPS[['fssval' ,'fretval' ,'foival' , 'fucval' , 'fintval', 'frntval', 'fdivval', 'fvetval', 'fcspval']].astype(float)).copy()
     unearned_income = CPS_unearned.sum(axis = 1)
@@ -127,18 +127,13 @@ earned_income = CPS_earned.sum(axis = 1)
 
 CPS['fam_earned_income'] = earned_income
 CPS['fam_unearned_income'] = unearned_income
-# CPS.to_pickle('CPS_family.pickle')
-# CPS_dataset = pd.read_pickle('CPS_family.pickle')
 CPS_dataset = CPS.copy()
-
+# CPS.to_pickle('CPS_family.pickle')
 
 #Earned income
 p_earned = CPS_dataset.wsal_val + CPS_dataset.semp_val + CPS_dataset.frse_val #individual earned income
 CPS_dataset['p_earned'] = p_earned
 
-
-#Net Income
-CPS_dataset['family_net_income'] = p_earned
 
 
 #disabled (check reg if categorical or binary is better after the sum)
@@ -157,51 +152,45 @@ CPS_use = CPS_dataset.drop('peridnum', 1)
 #Splitting data into training and test sets
 train = CPS_use.sample(frac=0.8, random_state=1)
 train_x = train.copy()
-train_x = train_x.drop(['pothval', 'hothval', 'fothval','strkuc','subuc','fam_unearned_income','unearned_income','finc_uc', 'hinc_uc', 'hucval', 'fucval', 'i_ucval','hunits', 'hhpos', 'h_seq', 'hrecord', 'ph_seq','uc_val_missing_NoneIn',                        
-    'uc_val','uc_yn', 'hunits', 'hhpos','h_seq', 'hsup_wgt', 'fsup_wgt', 'marsupwt','h_idnum1'],1)
-
+train_x = train_x.drop(['dis_val1','i_wctyp','dis_sc1','wc_type','i_wcval','hinc_wc','hwcval','fwcval', 'finc_wc','wc_yn','wc_val','mig_reg', 'mon', 'mig_div', 'migsame', 'm5g_div', 'm5g_reg','hrnumwic','wicyn', 'mig_reg', 'hrwicyn','pothval', 'hothval', 'fothval','fam_unearned_income','unearned_income',
+    'hunits', 'hhpos', 'h_seq', 'hrecord', 'ph_seq',                        
+    'hsup_wgt', 'fsup_wgt', 'marsupwt','h_idnum1', 'fh_seq'],1)
 
 
 test_x = CPS_use.loc[~CPS_use.index.isin(train_x.index)]
-test_y = test_x['uc_yn']
-test_x = test_x.drop(['pothval', 'hothval', 'fothval','strkuc','subuc','fam_unearned_income','unearned_income','finc_uc', 'hinc_uc', 'hucval', 'fucval', 'i_ucval','hunits', 'hhpos', 'h_seq', 'hrecord', 'ph_seq', 'uc_val_missing_NoneIn',                      
-    'uc_val','uc_yn', 'hunits', 'hhpos','h_seq', 'hsup_wgt', 'fsup_wgt', 'marsupwt','h_idnum1'],1)
-
+test_y = test_x['wc_yn']
+test_x = test_x.drop(['dis_val1','i_wctyp','dis_sc1','wc_type','i_wcval','hinc_wc','hwcval','fwcval', 'finc_wc','wc_yn','wc_val','mig_reg', 'mon', 'mig_div', 'migsame', 'm5g_div', 'm5g_reg','hrnumwic','wicyn', 'mig_reg', 'hrwicyn','pothval', 'hothval', 'fothval','fam_unearned_income','unearned_income',
+    'hunits', 'hhpos', 'h_seq', 'hrecord', 'ph_seq',                        
+    'hsup_wgt', 'fsup_wgt', 'marsupwt','h_idnum1', 'fh_seq'],1)
 
 # Fitting the Random Forest model to the training set
-Rf.fit(train_x, train['uc_yn'])
-print Rf.feature_importances_, train_x.columns.values
+Rf.fit(train_x, train['wc_yn'])
 predictions = Rf.predict(test_x)
 print 'score:', Rf.score(test_x, test_y) # Printing Random Forest accuracy
 fimp = Rf.feature_importances_
 colvals = train_x.columns.values
 
-
-
 features = Rf.feature_importances_
 maxes = np.argsort(features)[::-1]
-print maxes
 print list(train_x[maxes].columns.values)
 print features[maxes]
 
-
-# important features: 
-
-# 'lkstrch', 'lkweeks', 'wexp', 'weuemp', 'wkcheck', 
-# 'wkswork', 'a_wkstat', 'a_lfsr', 'pemlr', 'prswkxpns', 
-# 'a_wkslk', 'pruntype', 'a_explf', 'prwkstat', 'a_wksch', 
-# 'hrswk', 'a_untype', 'wewkrs', 'pehruslt', 'age1',
-#  'filestat', 'wemind', 'hrcheck', 'a_whenlj', 'weclw', 
-#  'phmemprs', 'weind', 'ptyn', 'ern_srce', 'tax_inc', 'occup',
-#   'hiemp', 'ptot_r', 'wsal_yn', 'clwk', 'ptotval', 'fedtax_ac', 
-#   'industry', 'fedtax_bc', 'fica', 'peioind', 'a_age', 'pyrsn', 'peioocc'
+# important features:
+# 'dis_yn','dsab_val', 'finc_dis', 'hdisval', 'hdis_yn', 
+# 'fdisval', 'dis_hp', 'dis_cs', 'i_disvl1', 'pyrsn', 'occup',
+#  'ptotval', 'hrswk', 'p_earned', 'chsp_val', 'peioocc', 
+#  'wsal_val', 'perrp', 'gtcbsa', 'a_whyabs', 'fh_seq', 
+#  'ptot_r', 'dis_sc2', 'a_dtind', 'ftotval', 'ern_val', 
+#  'rsnnotw', 'a_wksch', 'weind', 'int_val', 'gestfips', 'wkswork', 
+#  'industry', 'h_mis', 'hprop_val', 'emcontrb', 'a_age', 'hipaid', 'fmoop', 'fucval', 
 
 get_probs = CPS_use.copy()
-get_probs = get_probs.drop(['pothval', 'hothval', 'fothval','strkuc','subuc','fam_unearned_income','unearned_income','finc_uc', 'hinc_uc', 'hucval', 'fucval', 'i_ucval','hunits', 'hhpos', 'h_seq', 'hrecord', 'ph_seq', 'uc_val_missing_NoneIn',                      
-    'uc_val','uc_yn', 'hunits', 'hhpos','h_seq', 'hsup_wgt', 'fsup_wgt', 'marsupwt','h_idnum1'],1)
+get_probs = get_probs.drop(['dis_val1','i_wctyp','dis_sc1','wc_type','i_wcval','hinc_wc','hwcval','fwcval', 'finc_wc','wc_yn','wc_val','mig_reg', 'mon', 'mig_div', 'migsame', 'm5g_div', 'm5g_reg','hrnumwic','wicyn', 'mig_reg', 'hrwicyn','pothval', 'hothval', 'fothval','fam_unearned_income','unearned_income',
+    'hunits', 'hhpos', 'h_seq', 'hrecord', 'ph_seq',                        
+    'hsup_wgt', 'fsup_wgt', 'marsupwt','h_idnum1', 'fh_seq'],1)
 
 
-prediction_vec = Rf.predict_proba(get_probs)
-print prediction_vec
-    
+prediction_vec = Rf.predict_proba(get_probs)    
 np.savetxt('rf_probs.csv', prediction_vec)
+
+

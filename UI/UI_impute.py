@@ -118,6 +118,7 @@ CPS_dataset.disability = np.where(CPS_dataset.pedisrem == 'Yes', 1, CPS_dataset.
 
 # Corresponds to random forest probabilities that they received UI compensation
 CPS_dataset['RfYes'] = Rf_probs[:, 1]
+# These probabilities predicted those who were actually receiving UI in the test set with 88.9% accuracy
 
 
 #Regression
