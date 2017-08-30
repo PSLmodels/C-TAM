@@ -13,11 +13,13 @@ Currently this Repo includes the following programs<sup>1</sup>, derived from 20
     - Supplemental Nutritional Assistance Program ([SNAP](https://github.com/open-source-economics/Benefits/tree/master/SNAP)): The MTR is imputed from program rules.
     - [Veterans Benefit](https://github.com/open-source-economics/Benefits/tree/master/VB): No MTR is imputed since this is a social insurance program.
     - [Social Security](https://github.com/open-source-economics/Benefits/tree/master/SS): The MTR is estimated for people in the work force, based on their current earnings, education experience, and work experience. The model for MTR estimation will be improved with respect to life-earning projection assumptions.
-
+    - Housing Assistance ()
 
 -   Programs with participation based on CPS ASEC:
     - Medicaid: Participation is augmented to match administrative data. Insurance values for each participant are imputed based on Medical Expenditure Penal Survey (MEPS) expenditure data. No MTR is imputed for current version, but may be estimated at the eligible income upper bound in future.
     - Medicare: Insurance values for each participant are imputed based on Medical Expenditure Penal Survey (MEPS) expenditure data. No MTR is imputed.
+    - Women, Infants and Children (WIC): Participation is edited first and augmented based on each category (Women, infants or children) of administrative data. Benefit is assigned based on state-level administrative average per person.
+
 
 - Program based CPS Tax-Unit<sup>2</sup>
     - Affordable Care Act Premium Tax Credit (ACA PTC): Both participation and benefit amounts are estimated using employment, current insurance coverage, and county level residence at tax-unit level, with the ACA PTC calculator developed by Martin Holmer and Nikolai Boboshko<sup>3</sup>.  
@@ -27,8 +29,7 @@ This Repo will include the following programs in the near future:
 - Temporary Assistance for Needy Families (TANF)
 - Unemployment Insurance
 - General Assistance
-- Public Housing
-- Women, Infants and Children (WIC)
+
 - Workman’s Compensation
 
 Intermediate term improvements (2017):
@@ -51,7 +52,9 @@ Long term improvements (2018):
 Core Maintainer
 
 - Matt Jensen
+- Anderson Frailey
 - Amy Xu
+
 
 Contributor
 
