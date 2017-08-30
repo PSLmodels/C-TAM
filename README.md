@@ -22,7 +22,7 @@ Currently this Repo includes the following programs<sup>1</sup>, derived from 20
 -   Programs with participation based on CPS ASEC:
     - Medicaid: Participation is augmented to match administrative data. Insurance values for each participant are imputed based on Medical Expenditure Penal Survey (MEPS) expenditure data. No MTR is imputed for current version, but may be estimated at the eligible income upper bound in future.
     - Medicare: Insurance values for each participant are imputed based on Medical Expenditure Penal Survey (MEPS) expenditure data. No MTR is imputed.
-    - Women, Infants and Children (WIC): Participation is edited first and augmented based on each category (Women, infants or children) of administrative data. Benefit is assigned based on state-level administrative average per person.
+    - Women, Infants and Children (WIC): Participation is edited and augmented based on each category (Women, infants or children) of administrative data. Benefit is assigned based on state-level administrative average per person.
     
 
 - Program based CPS Tax-Unit<sup>2</sup>
@@ -31,8 +31,8 @@ Currently this Repo includes the following programs<sup>1</sup>, derived from 20
 
 Current Work-In-Progress:
 
-- Benefit extrpolation: see more details in taxdata issue #, and Tax-Calculator PR #1500
-- Minor adjustments to TANF and
+- Benefit extrpolation: see more details in taxdata [issue #106](https://github.com/open-source-economics/taxdata/issues/106) and Tax-Calculator [PR #1500](https://github.com/open-source-economics/Tax-Calculator/pull/1500)
+- Minor adjustments to TANF
 - Impute institutional population from American Community Survey population
 
 Intermediate term improvements (2017):
