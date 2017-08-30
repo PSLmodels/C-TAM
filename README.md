@@ -13,36 +13,36 @@ Currently this Repo includes the following programs<sup>1</sup>, derived from 20
     - Supplemental Nutritional Assistance Program ([SNAP](https://github.com/open-source-economics/Benefits/tree/master/SNAP)): The MTR is imputed from program rules.
     - [Veterans Benefit](https://github.com/open-source-economics/Benefits/tree/master/VB): No MTR is imputed since this is a social insurance program.
     - [Social Security](https://github.com/open-source-economics/Benefits/tree/master/SS): The MTR is estimated for people in the work force, based on their current earnings, education experience, and work experience. The model for MTR estimation will be improved with respect to life-earning projection assumptions.
-    - Housing Assistance ()
+    - [Housing Assistance](https://github.com/open-source-economics/C-TAM/tree/master/Housing): We augment data based on three major federal programs, and provides two inputation results. One imputation is based on the market value of housing subsidy estimated by Census, and the other imputation is based on the estimation from Supplemental Poverty Measure.
+    - [Unemployment Insurance](https://github.com/open-source-economics/C-TAM/tree/master/UI): Imputation is based on total number of beneficiaries covered in 2014. 
+    - Temporary Assistance for Needy Families (TANF)
+    - Workman’s Compensation: This is not a program funded through goverments. Thus we did the imputation but have not included it in the general documentation.
+
 
 -   Programs with participation based on CPS ASEC:
     - Medicaid: Participation is augmented to match administrative data. Insurance values for each participant are imputed based on Medical Expenditure Penal Survey (MEPS) expenditure data. No MTR is imputed for current version, but may be estimated at the eligible income upper bound in future.
     - Medicare: Insurance values for each participant are imputed based on Medical Expenditure Penal Survey (MEPS) expenditure data. No MTR is imputed.
     - Women, Infants and Children (WIC): Participation is edited first and augmented based on each category (Women, infants or children) of administrative data. Benefit is assigned based on state-level administrative average per person.
-
+    
 
 - Program based CPS Tax-Unit<sup>2</sup>
     - Affordable Care Act Premium Tax Credit (ACA PTC): Both participation and benefit amounts are estimated using employment, current insurance coverage, and county level residence at tax-unit level, with the ACA PTC calculator developed by Martin Holmer and Nikolai Boboshko<sup>3</sup>.  
 
-This Repo will include the following programs in the near future:
 
-- Temporary Assistance for Needy Families (TANF)
-- Unemployment Insurance
-- General Assistance
+Current Work-In-Progress:
 
-- Workman’s Compensation
+- Benefit extrpolation: see more details in taxdata issue #, and Tax-Calculator PR #1500
+- Minor adjustments to TANF and
+- Impute institutional population from American Community Survey population
 
 Intermediate term improvements (2017):
 
-- Extrapolate 2014 CPS augmented welfare data to 2026
 - Add administrative costs for all welfare programs
 - Impute immigrant status
 - Estimate Participation Tax Rate (PTR) for welfare participates
-- Adjust additional programs listed above
 
 Long term improvements (2018):
 
-- Impute institutional population from American Community Survey population
 - Model Medicaid cliff marginal tax rate
 - Expand the database to include 2015 CPS
 
