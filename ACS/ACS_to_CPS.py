@@ -89,6 +89,8 @@ ACS_dataset['prdtrace'] = ACS_dataset['rac1p']
 
 ACS_dataset['gestfips'] = ACS_dataset['st']
 
+ACS_dataset['marsupwt'] = ACS_dataset['pwgtp'] * ACS_dataset.adjinc
+
 ACS_dataset['prison_age'] = np.where((ACS_dataset.a_age < 45) & (ACS_dataset.a_age > 14), 1, 0)
 ACS_dataset['prison_male'] = np.where((ACS_dataset.a_sex == 1), 1, 0) 
 ACS_dataset['prison_self_care'] = np.where((ACS_dataset.ddrs == 1), -1, 0) 
@@ -99,7 +101,7 @@ ACS_dataset.prisoner = np.where(ACS_dataset['prisoner'] > 0, 1, 0)
 ACS_dataset['other_institutionalized'] = np.where(ACS_dataset.prisoner != 1, 1, 0)
 ACS_dataset_to_CPS = ACS_dataset[['a_maritl', 'ssi_val' , 'ss_val', 'paw_val', 'hfoodsp',
         'prdtrace', 'gestfips', 'prisoner', 'other_institutionalized', 'semp_val', 'wsal_val',
-        'ptotval', 'pothval', 'pearnval', 'a_sex', 'a_age', 'a_hga']]
+        'ptotval', 'pothval', 'pearnval', 'a_sex', 'a_age', 'a_hga',  'marsupwt']]
 ACS_dataset_to_CPS.to_csv('ACS_2015_Institutionalized.csv')
 
 
