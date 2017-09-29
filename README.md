@@ -47,7 +47,7 @@ Long term improvements (2018):
 - Expand the database to include 2015 CPS
 
 
-[C-TAM Documentation](https://docs.google.com/document/d/1CIfp8KwECJa4bIF9U3hHTf3P7Y19ya2NI5QhEDOyG98/edit?usp=sharing) (Latest Version, Work in Progress)
+[C-TAM Documentation](https://docs.google.com/document/d/1OoWr18ZZkXC9jRI3PHkvKncfCK_BGrTez4syXBCMCK8/edit?usp=sharing) (Latest Version, Work in Progress)
 
 Core Maintainer
 
