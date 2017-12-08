@@ -1,7 +1,19 @@
-''' This script creates the administrative data used for imputation'''
+''' 
+This script creates the administrative data used for imputation.
 
-''' You can find ar5159.csv at https://workforcesecurity.doleta.gov/unemploy/DataDownloads.asp. Download the regular program and workshare program files. For spillovers
-you can find that data by downloading ar539 off the same website.'''
+You can download ar5159.csv, aw5159.csv, and ar539.csv at https://workforcesecurity.doleta.gov/unemploy/DataDownloads.asp by following these instructions after having navigated to that page:
+
+*Go to the table titled "ETA 5159: Claims and Payment Activities"
+*Download: 
+    *the regular program by clicking the "Data" hyperlink in the "Raw Data" column and the "Regular Program" row (should download as ar5159.csv).
+    *the workshare program by clicking the "Data" hyperlink in the "Raw Data" column and the "Workshare (STC)" row (should download as ar5159.csv).
+
+*Go to the table titled "ETA 539: Weekly Claims and Extended Benefits Trigger Data" 
+*Download: 
+    *the regular program by clicking the "Data" hyperlink in the "Raw Data" column and the "Regular Program" row (should download as ar539.csv).
+
+*Move these files to the C-TAM/WC/ directory.
+'''
 
 import numpy as np
 import pandas as pd

@@ -1,6 +1,6 @@
 '''                                 
 About: 
-    This script imputes Unemployment Insurance (UI) compensation for regular and worshare programs. 
+    This script imputes Unemployment Insurance (UI) compensation for regular and worshare programs using random forests.
     We exclude Extended Benefits (EB) since its totals are negligible relative to the regular program totals (<.1 %).
     We impute UI recipients, and their dollar benefit amount to match the aggregates with United States Department of 
     Labor (DOL) statistics for these programs. In this current version, we used 2015 CPS data since its UI question 
@@ -11,11 +11,11 @@ About:
     1 - current recipient on file, 2 - imputed recipient), and benefit amount.
 
 Input: 
-    2014 CPS (cpsmar2014t.csv), number of recipients and their benefits amount by state in 2014 (Administrative.csv),
+    asec2015_pubuse.csv
     rf_probs.csv from Rf_probs.ipynb.
 
 Output: 
-    UI_Imputation.csv, and UI_Imputation_rf.csv (imputation using random forest probabilities as well)
+    UI_Imputation_rf.csv 
  
 Additional Source links: 
     DOL CY 2014 administrative data at https://workforcesecurity.doleta.gov/unemploy/DataDownloads.asp 
@@ -25,7 +25,6 @@ import pandas as pd
 from pandas import DataFrame
 import numpy as np
 import random
-import statsmodels.discrete.discrete_model as sm
 import matplotlib.pyplot as plt
 
 # Administrative level data. 'Admin_totals_all.csv' obtained from create_admin.py
@@ -40,7 +39,7 @@ Admin_totals[['Fips','Avg_benefit']].to_csv('avg.csv')
 Rf_probs = np.loadtxt('rf_probs.csv')
 
 # Variables we use in CPS:
-CPS_dataset = pd.read_csv('asec2015_pubuse.csv')
+CPS_dataset = pd.read_csv('../asec2015_pubuse.csv')
 columns_to_keep = ['lkweeks', 'lkstrch', 'weuemp', 'wkswork', 'a_explf', 'a_lfsr', 'pruntype', 'a_untype', 'prwkstat',
   'a_age', 'age1', 'ptotval', 'ptot_r', 'pemlr', 'pyrsn', 'filestat', 
   'a_wkslk', 'hrswk', 'agi', 'tax_inc', 'peioocc', 'a_wksch', 'wemind', 'hprop_val','housret', 'prop_tax','fhoussub', 'fownu18', 'fpersons','fspouidx', 'prcitshp', 'gestfips','marsupwt','a_age','wsal_val','semp_val','frse_val',
@@ -72,6 +71,9 @@ CPS_dataset.a_explf = CPS_dataset.a_explf.astype(int)
 
 #Actively looking for work?
 CPS_dataset['lkweeks'].replace(regex=True,inplace=True,to_replace=r'\D',value=r'')
+
+CPS_dataset.lkweeks = CPS_dataset.lkweeks.replace('01 weeks', 1)
+CPS_dataset.lkweeks = CPS_dataset.lkweeks.replace('51 weeks', 51)
 CPS_dataset.lkweeks = CPS_dataset.lkweeks.astype(int)
 CPS_dataset.lkweeks = np.where((CPS_dataset.lkweeks > 0), 1, 0)
 
@@ -103,6 +105,7 @@ CPS_dataset.a_age = np.where(CPS_dataset.a_age == "80-84 years of age",
 CPS_dataset.a_age = np.where(CPS_dataset.a_age == "85+ years of age",
                              random.randrange(85, 95),
                              CPS_dataset.a_age)
+CPS_dataset  = CPS_dataset.loc[:,~CPS_dataset.columns.duplicated()]
 CPS_dataset.a_age = pd.to_numeric(CPS_dataset.a_age)
 CPS_dataset['elderly'] = 0
 CPS_dataset.elderly = np.where(CPS_dataset.a_age > 61, 1, CPS_dataset.elderly)
@@ -120,17 +123,7 @@ CPS_dataset.disability = np.where(CPS_dataset.pedisrem == 'Yes', 1, CPS_dataset.
 CPS_dataset['RfYes'] = Rf_probs[:, 1]
 # These probabilities predicted those who were actually receiving UI in the test set with 88.9% accuracy
 
-
-#Regression
-CPS_dataset['ptotval'] = np.where(CPS_dataset.ptotval > 5200 , 1, 0) # Did you make the enough money during your base period?
-CPS_dataset['intercept'] = np.ones(len(CPS_dataset))
-CPS_dataset['fmoop'] = np.where(CPS_dataset.fmoop > 0 , 1 , 0)
-CPS_dataset['F_MV'] = np.where(CPS_dataset.f_mv_fs > 0 , 1 , 0)
 CPS_dataset['indicator'] = CPS_dataset.uc_yn
-model = sm.Logit(endog = CPS_dataset.indicator, exog = CPS_dataset[['intercept', 'weuemp','ptotval','pruntype','a_explf', 'lkweeks', 'lkstrch','F_MV','disability']])
-logit_res = model.fit()
-probs = logit_res.predict()
-CPS_dataset['probs'] = probs
 
 # CPS total benefits and Administrative total benefits
 state_benefit = {}
@@ -175,90 +168,6 @@ for FIPS in Admin_totals.Fips:
 d = DataFrame(diff)
 d = d[['Fips', 'Mean Benefit', 'Difference in Population', 'CPS Population', 'UI Population']]
 d.to_csv('recipients_diff.csv')
-
-
-CPS_dataset['impute'] = np.zeros(len(CPS_dataset))
-CPS_dataset['UI_impute'] = np.zeros(len(CPS_dataset))
-
-non_current = (CPS_dataset.indicator==0)
-current = (CPS_dataset.indicator==1)
-random.seed()
-over_states = 0
-over_amount_total = 0
-
-for FIPS in Admin_totals.Fips:
-    
-        # print ('we need to impute', d['Difference in Population'][d['Fips'] == FIPS].values[0], 'for state', FIPS)
-        
-        if d['Difference in Population'][d['Fips'] == FIPS].values[0] < 0:
-            continue
-        else:
-            this_state = (CPS_dataset.gestfips==FIPS)
-            not_imputed = (CPS_dataset.impute==0)
-            pool_index = CPS_dataset[this_state&not_imputed&non_current].index
-            pool = DataFrame({'weight': CPS_dataset.marsupwt[pool_index], 'prob': probs[pool_index]},
-                            index=pool_index)
-            pool = pool.sort_values(by = 'prob', ascending=False)
-            pool['cumsum_weight'] = pool['weight'].cumsum()
-            pool['distance'] = abs(pool.cumsum_weight-d['Difference in Population'][d['Fips'] == FIPS].values)
-            min_index = pool.sort_values(by='distance')[:1].index
-            min_weight = int(pool.loc[min_index].cumsum_weight)
-            pool['impute'] = np.where(pool.cumsum_weight<=min_weight+10 , 1, 0)
-            CPS_dataset.loc[pool.index[pool['impute']==1], 'impute'] = 1
-            CPS_dataset.loc[pool.index[pool['impute']==1], 'UI_impute'] = Admin_totals['Avg_benefit'][Admin_totals['Fips'] ==FIPS].values[0]
-            # print ('Method1: regression gives', 
-            #     CPS_dataset.marsupwt[(CPS_dataset.impute==1)&this_state].sum()) 
-
-#Adjustment ratio
-results = {}
-
-imputed = (CPS_dataset.impute == 1)
-has_val = (CPS_dataset.indicator == 1)
-no_val = (CPS_dataset.uc_val == 0)
-
-for FIPS in Admin_totals.Fips:
-    this_state = (CPS_dataset.gestfips == FIPS)
-    current_total = (CPS_dataset.uc_val * CPS_dataset.marsupwt)[this_state].sum() 
-    imputed_total = (CPS_dataset.UI_impute * CPS_dataset.marsupwt)[this_state & imputed].sum()
-    on_file = current_total + imputed_total
-    admin_total = Admin_totals.tot_UI_outlays[Admin_totals.Fips == FIPS]
-    adjust_ratio = admin_total / on_file
-    this_state_num = [Admin_totals['state'][Admin_totals.Fips == FIPS].values[0], on_file, admin_total.values[0], adjust_ratio.values[0]]
-    results[FIPS] = this_state_num
-    CPS_dataset.UI_impute = np.where(has_val & this_state, CPS_dataset.uc_val * adjust_ratio.values, CPS_dataset.UI_impute)
-    CPS_dataset.UI_impute = np.where(no_val & this_state, CPS_dataset.UI_impute * adjust_ratio.values, CPS_dataset.UI_impute)
-CPS_dataset["UI_participation"] = np.zeros(len(CPS_dataset))
-CPS_dataset["UI_participation"] = np.where(CPS_dataset.impute == 1, 2, 0) #Augmented
-CPS_dataset['UI_participation'] = np.where(has_val, 1, CPS_dataset.UI_participation)
-r = DataFrame(results).transpose()
-r.columns = ['State', 'Imputed', 'Admin', 'adjust ratio']
-r['Imputed'] = r['Imputed'].astype(int)
-r['adjust ratio'] *= 10000
-r['adjust ratio'] = r['adjust ratio'].astype(int)
-r['adjust ratio'] /= 10000
-r.to_csv('amount.csv', index=False)
-
-CPS_dataset.to_csv('UI_imputation.csv', 
-                   columns=['peridnum','UI_participation', 'UI_impute'])
-
-
-## Checking post-adjustment totals to see if they match admin totals
-CPS_dataset.UI_participation = np.where(CPS_dataset.UI_participation == 2 , 1, CPS_dataset.UI_participation)
-CPS_dataset['after_totals_reciepts'] = (CPS_dataset.UI_participation * CPS_dataset.marsupwt)
-CPS_dataset['after_totals_outlays'] = (CPS_dataset.UI_impute * CPS_dataset.marsupwt)
-total_outlays = CPS_dataset.groupby(['gestfips'])['after_totals_outlays'].sum().astype(int).reset_index(drop = True)
-total_recipients = CPS_dataset.groupby(['gestfips'])['after_totals_reciepts'].sum().astype(int).reset_index(drop = True)
-
-df = pd.DataFrame()
-df['State'] = Admin_totals.state
-df['post augment CPS total benefits (annual)'] = total_outlays
-df['post augment CPS total recipients'] = total_recipients
-df['Admin total benefits (annual)'] = Admin_totals['tot_UI_outlays']
-df['Admin total recipients'] = Admin_totals['tot_UI_recipients']
-df.to_csv('post_augment_adminCPS_totals.csv')
-
-
-
 
 '''Using Random Forest probabilities'''
 
