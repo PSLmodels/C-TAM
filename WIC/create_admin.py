@@ -47,7 +47,9 @@ tot_infants.loc[indian_res.index, "state"] = indian_res
 tot_infants.state = tot_infants['state'].str.strip()
 tot_infants = tot_infants[tot_infants['state'].isin(states.values())]
 tot_infants = tot_infants.groupby(['state'])['Average Participation'].sum().astype(int)
-tot_infants = tot_infants.rename('total_infants')
+print tot_infants.name
+tot_infants.name = "total_infants"
+
 
 tot_children = tot_children.replace(states, regex = True)
 tot_children['State_indian'] = tot_children['state'].str.split(',').str[1]
@@ -58,7 +60,7 @@ tot_children.loc[indian_res.index, "state"] = indian_res
 tot_children.state = tot_children['state'].str.strip()
 tot_children = tot_children[tot_children['state'].isin(states.values())]
 tot_children = tot_children.groupby(['state'])['Average Participation'].sum().astype(int)
-tot_children = tot_children.rename('total_children')
+tot_children.name = 'total_children'
 
 tot_women = tot_women.replace(states, regex = True)
 tot_women['State_indian'] = tot_women['state'].str.split(',').str[1]
@@ -69,7 +71,7 @@ tot_women.loc[indian_res.index, "state"] = indian_res
 tot_women.state = tot_women['state'].str.strip()
 tot_women = tot_women[tot_women['state'].isin(states.values())]
 tot_women = tot_women.groupby(['state'])['Average Participation'].sum().astype(int)
-tot_women = tot_women.rename('total_women')
+tot_women.name ='total_women'
 
 benefits_received = benefits_received.replace(states, regex = True)
 benefits_received['State_indian'] = benefits_received['state'].str.split(',').str[1]
@@ -80,7 +82,7 @@ benefits_received.loc[indian_res.index, "state"] = indian_res
 benefits_received.state = benefits_received['state'].str.strip()
 benefits_received = benefits_received[benefits_received['state'].isin(states.values())]
 benefits_received = benefits_received.groupby(['state'])['Cumulative Cost'].sum().astype(int)
-benefits_received = benefits_received.rename('total_benefits')
+benefits_received.name = 'total_benefits'
 
 final = pd.concat([tot_infants, tot_women, tot_children, benefits_received], axis = 1).reset_index()
 final = final.sort_values('state')
