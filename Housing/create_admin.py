@@ -1,19 +1,22 @@
 ''' This script creates the administrative data used for imputation'''
 
-''' You can find STATE_2014.csv at https://www.huduser.gov/portal/datasets/assthsg.html. Select the 2014 file, at the state summary level, with all variables. We would use county level if CPS had county codes for all respondents'''
+''' You can find STATE_2014.csv at https://www.huduser.gov/portal/datasets/assthsg.html. Select the 2014 Based on 2010 Census for Year, State for Summary Level, ALL for State, Summary of All HUD Programs for Program, ALL for variable. We would use county level if CPS had county codes for all respondents'''
+
 import numpy as np
 import pandas as pd
 import re
 # Summary of all HUD programs
 Admin_totals = pd.read_csv('STATE_2014.csv')
-Admin_totals = Admin_totals.groupby(['code', 'program']).mean()\
-        .reset_index()[Admin_totals.program == 1].reset_index(drop = True)\
-                [['code', 'number_reported', 'spending_per_month']]
+Admin_totals = Admin_totals.groupby(['Code', 'Program']).mean()\
+        .reset_index()[Admin_totals.Program == 1].reset_index(drop = True)\
+                [['Code', '# Reported', 'Average Family Expenditure per month ($$)']]
 
 Admin_totals = Admin_totals.iloc[:-5]
-Admin_totals['code'] = Admin_totals.astype(int)
-Admin_totals['spending_per_year'] = Admin_totals['spending_per_month'] * Admin_totals['number_reported'] * 12
-Admin_totals = Admin_totals[['code', 'number_reported', 'spending_per_year']]
+Admin_totals.Code = Admin_totals.Code.map(lambda x: x.lstrip(\
+        '="').rstrip('"'))
+Admin_totals['Code'] = Admin_totals.astype(int)
+Admin_totals['Average Family Expenditure per year ($$)'] = Admin_totals['Average Family Expenditure per month ($$)'] * Admin_totals['# Reported'] * 12
+Admin_totals = Admin_totals[['Code', '# Reported', 'Average Family Expenditure per year ($$)']]
 Admin_totals.columns = ['Fips', 'housing_recipients', 'housing_value']
 states = ['Alabama' ,'Alaska', 'Arizona' ,'Arkansas', 'California' ,'Colorado',
  'Connecticut' ,'Delaware' ,'District of Columbia' ,'Florida' ,'Georgia',

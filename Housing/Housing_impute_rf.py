@@ -1,16 +1,17 @@
-# This script imputes Housing Choice Voucher Program (HCV), Section 8 project-based rental assistance and Public housing recipients dollar benefit amount to match the aggregates with United States Department of Housing and Urban Development (HUD) statistics for these programs. In this current version, we used 2014 CPS data and HUD "Picture of Subsidized Households" using all housing program totals (includes a few smaller federal programs as well). Please refer to the documentation in the same folder for more details on methodology and assumptions. The output this script is a personal level dataset that contains CPS household level sequence (h_seq), individual participation indicator (Housing participationc, 0 - not a recipient, 1 - current recipient on file, 2 - imputed recipient), and benefit amount.
-# 
-# Input: 2014 CPS (cpsmar2014t.csv), number of recipients and their benefits amount by state in 2014 (Administrative.csv)
-# 
-# Output: Housing_Imputation.csv
-# 
-# Additional Source links: https://www.huduser.gov/portal/datasets/assthsg.html (FY14, with state summary levels, summary of all HUD programs, with all variables)
+'''
+This script imputes Housing Choice Voucher Program (HCV), Section 8 project-based rental assistance and Public housing recipients dollar benefit amount to match the aggregates with United States Department of Housing and Urban Development (HUD) statistics for these programs. In this current version, we used 2014 CPS data and HUD "Picture of Subsidized Households" using all housing program totals (includes a few smaller federal programs as well). Please refer to the documentation in the same folder for more details on methodology and assumptions. The output this script is a personal level dataset that contains CPS household level sequence (h_seq), individual participation indicator (Housing participationc, 0 - not a recipient, 1 - current recipient on file, 2 - imputed recipient), and benefit amount.
+
+Input: 2014 CPS (cpsmar2014t.csv), number of recipients and their benefits amount by state in 2014 (Administrative.csv)
+
+Output: Housing_Imputation.csv
+
+Additional Source links: https://www.huduser.gov/portal/datasets/assthsg.html (FY14, with state summary levels, summary of all HUD programs, with all variables)
+'''
 
 import pandas as pd
 from pandas import DataFrame
 import numpy as np
 import random
-import statsmodels.discrete.discrete_model as sm
 import matplotlib.pyplot as plt
 
 # Do you want to use the supplemental poverty measure data? This includes better estimates of FHOUSSUB with its variable spmu_caphousesub
@@ -46,7 +47,7 @@ def income_lim_indicator50(income, family_size, gestfips):
         return 0
 
 # # Variables we use in CPS:
-CPS_dataset = pd.read_csv('cpsmar2014t.csv')
+CPS_dataset = pd.read_csv('../cpsmar2014t.csv')
 columns_to_keep = ['hprop_val','housret', 'prop_tax','fhoussub', 'fownu18', 'fpersons','fspouidx', 'prcitshp', 'gestfips','marsupwt','a_age','wsal_val','semp_val','frse_val',
                   'ss_val','rtm_val','div_val','oi_off','oi_val','uc_yn','uc_val', 'int_yn', 'int_val','pedisdrs', 'pedisear', 'pediseye', 
                     'pedisout', 'pedisphy', 'pedisrem','a_sex','peridnum','h_seq','fh_seq', 'ffpos', 'fsup_wgt',
@@ -227,17 +228,6 @@ f_House_yn = f_House_yn.reset_index()
 # f_House_yn = pd.read_csv('use_df_both.csv')
 f_House_yn['RfYes'] = Rf_probs[:, 1]
 
-#Regression
-dta = f_House_yn
-dta['intercept'] = np.ones(len(dta))
-dta['HFDVAL'] = np.where(dta.HFDVAL > 0 , 1 , 0)
-dta['FMOOP'] = np.where(dta.FMOOP > 0 , 1 , 0)
-dta['F_MV'] = np.where(dta.F_MV > 0 , 1 , 0)
-dta['medicaid'] = np.where(dta.medicaid > 0 , 1 , 0)
-model = sm.Logit(endog = dta.indicator, exog = dta[['intercept','prop_val' ,'FMOOP','family_size', 'F_MV','under_30_inc', 'under_50_inc','family_net','f_disability','f_elderly','citizenship', 'medicaid']])
-logit_res = model.fit()
-probs = logit_res.predict()
-f_House_yn['probs'] = probs
 
 # CPS total benefits and Administrative total benefits
 state_benefit = {}
@@ -284,112 +274,6 @@ for FIPS in Admin_totals.Fips:
 d = DataFrame(diff)
 d = d[['Fips', 'Mean Benefit', 'Difference in Population', 'CPS Population', 'Housing Population']]
 d.to_csv('recipients_diff.csv')
-
-
-f_House_yn['true_positive'] = np.zeros(len(f_House_yn))
-f_House_yn['impute'] = np.zeros(len(f_House_yn))
-f_House_yn['housing_impute'] = np.zeros(len(f_House_yn))
-
-non_current = (f_House_yn.indicator==0)
-current = (f_House_yn.indicator==1)
-random.seed()
-
-for FIPS in Admin_totals.Fips:
-    
-        # print ('we need to impute', d['Difference in Population'][d['Fips'] == FIPS].values[0], 'for state', FIPS)
-        
-        if d['Difference in Population'][d['Fips'] == FIPS].values[0] < 0:
-            this_state = (f_House_yn.f_gestfips==FIPS)
-            not_reduced = (f_House_yn.true_positive==0)
-            before_total = f_House_yn[this_state&not_reduced&current]['f_marsupwt'].sum()
-            pool_index = f_House_yn[this_state&not_reduced&current].index
-            pool = DataFrame({'weight': f_House_yn.f_marsupwt[pool_index], 'prob': probs[pool_index]},
-                            index=pool_index)
-            pool = pool.sort_values(by = 'prob', ascending=False)
-            pool['cumsum_weight'] = pool['weight'].cumsum()
-            pool['distance'] = abs(before_total + d['Difference in Population'][d['Fips'] == FIPS].values - pool.cumsum_weight)
-            min_index = pool.sort_values(by='distance')[:1].index
-            min_weight = int(pool.loc[min_index].cumsum_weight)
-            pool['true_positive'] = np.where(pool.cumsum_weight<=min_weight+1000 , 1, 0)
-            f_House_yn.loc[pool.index[pool['true_positive']==1], 'true_positive'] = 1
-            # print ('Method1: regression takes', 
-            #         f_House_yn.f_marsupwt[(f_House_yn.indicator==1)& this_state].sum() - f_House_yn.f_marsupwt[(f_House_yn.true_positive ==1)& this_state].sum())
-        else:
-            this_state = (f_House_yn.f_gestfips==FIPS)
-            f_House_yn.loc[this_state & current, 'true_positive'] = 1
-            not_imputed = (f_House_yn.impute==0)
-            pool_index = f_House_yn[this_state&not_imputed&non_current].index
-            pool = DataFrame({'weight': f_House_yn.f_marsupwt[pool_index], 'prob': probs[pool_index]},
-                            index=pool_index)
-            pool = pool.sort_values(by = 'prob', ascending=False)
-            pool['cumsum_weight'] = pool['weight'].cumsum()
-            pool['distance'] = abs(pool.cumsum_weight-d['Difference in Population'][d['Fips'] == FIPS].values)
-            min_index = pool.sort_values(by='distance')[:1].index
-            min_weight = int(pool.loc[min_index].cumsum_weight)
-            pool['impute'] = np.where(pool.cumsum_weight<=min_weight+10 , 1, 0)
-            f_House_yn.loc[pool.index[pool['impute']==1], 'impute'] = 1
-            f_House_yn.loc[pool.index[pool['impute']==1], 'housing_impute'] = Admin_totals['Avg_Voucher'][Admin_totals['Fips'] ==FIPS].values[0] / 12.
-            # print ('Method1: regression gives', 
-            #     f_House_yn.f_marsupwt[(f_House_yn.impute==1)&this_state].sum()) 
-
-
-#Adjustment ratio
-results = {}
-
-imputed = (f_House_yn.impute == 1)
-true_positive = (f_House_yn.true_positive == 1)
-has_val = (f_House_yn.indicator == 1)
-no_val = (f_House_yn.fVouch_val == 0)
-
-for FIPS in Admin_totals.Fips:
-    this_state = (f_House_yn.f_gestfips == FIPS)
-    current_total = (f_House_yn.fVouch_val * f_House_yn.f_marsupwt)[this_state & true_positive].sum() 
-    imputed_total = (f_House_yn.housing_impute * f_House_yn.f_marsupwt)[this_state & imputed].sum()
-    on_file = current_total + imputed_total
-    admin_total = Admin_totals.housing_value[Admin_totals.Fips == FIPS] / 12.
-    adjust_ratio = admin_total / on_file
-    this_state_num = [Admin_totals['state'][Admin_totals.Fips == FIPS].values[0], on_file, admin_total.values[0], adjust_ratio.values[0]]
-    results[FIPS] = this_state_num
-    f_House_yn.housing_impute = np.where(has_val & this_state & true_positive, f_House_yn.fVouch_val * adjust_ratio.values, f_House_yn.housing_impute)
-    f_House_yn.housing_impute = np.where(no_val & this_state, f_House_yn.housing_impute * adjust_ratio.values, f_House_yn.housing_impute)
-f_House_yn["Housing_participation"] = np.zeros(len(f_House_yn))
-f_House_yn["Housing_participation"] = np.where(f_House_yn.impute == 1, 2, 0) #Augmented
-f_House_yn["Housing_participation"] = np.where(true_positive, 1, f_House_yn.Housing_participation) #CPS
-r = DataFrame(results).transpose()
-r.columns = ['State', 'Imputed', 'Admin', 'adjust ratio']
-r['Imputed'] = r['Imputed'].astype(int)
-r['adjust ratio'] *= 10000
-r['adjust ratio'] = r['adjust ratio'].astype(int)
-r['adjust ratio'] /= 10000
-r.to_csv('amount.csv', index=False)
-
-if use_spm_data == True:
-    f_House_yn.to_csv('Housing_Imputation_spm.csv', 
-                   columns=['fh_seq','ffpos','Housing_participation', 'housing_impute'])
-else:
-    f_House_yn.to_csv('Housing_Imputation.csv', 
-                   columns=['fh_seq','ffpos','Housing_participation', 'housing_impute'])
-
-
-## Checking post-adjustment totals to see if they match admin totals
-f_House_yn.Housing_participation = np.where(f_House_yn.Housing_participation == 2 , 1, f_House_yn.Housing_participation)
-f_House_yn['after_totals_reciepts'] = (f_House_yn.Housing_participation * f_House_yn.f_marsupwt)
-f_House_yn['after_totals_voucher'] = (f_House_yn.housing_impute * f_House_yn.f_marsupwt)
-total_voucherprice = f_House_yn.groupby(['f_gestfips'])['after_totals_voucher'].sum().astype(int).reset_index(drop = True) * 12
-total_recipients = f_House_yn.groupby(['f_gestfips'])['after_totals_reciepts'].sum().astype(int).reset_index(drop = True)
-
-df = pd.DataFrame()
-df['State'] = Admin_totals.state
-df['post augment CPS total benefits (annual)'] = total_voucherprice
-df['post augment CPS total recipients'] = total_recipients
-df['Admin total benefits (annual)'] = Admin_totals['housing_value']
-df['Admin total recipients'] = Admin_totals['housing_recipients']
-if use_spm_data == True:
-    df.to_csv('post_augment_adminCPS_totals_spm.csv')
-else:
-    df.to_csv('post_augment_adminCPS_totals.csv')
-
-
 
 
 '''Using Random Forest probabilities'''

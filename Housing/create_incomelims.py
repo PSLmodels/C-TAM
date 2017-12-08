@@ -1,6 +1,13 @@
 '''This script creates the income limit categories that are used for the logistic regression in Housing_impute.py'''
 
-'''You can find income_limits2014.csv at https://www.hudexchange.info/programs/home/home-income-limits/?filter_Year=2014&filter_=Scope=&filter_State=&programHOME&group=IncomeLmts'''
+'''You can find income_limits2014.csv at https://www.hudexchange.info/programs/home/home-income-limits/?filter_Year=2014&filter_=Scope=&filter_State=&programHOME&group=IncomeLmts
+
+Make sure that the year 2014 is selected and download the 2014 HOME Income Limits - All States .xlsx file. Then rename this file to be income_limits2014.csv for loading in via line 12. 
+
+If a parsing error is thrown, there are probably multiple sheets in the .xlsx file, which is a Microsoft Excel workbook. To solve this problem, open this file in Excel and delete any other sheets, which should be empty, before proceeding to save the file as income_limits2014.csv
+
+#TODO: Should we just include the income_limits2014.csv in the repo for direct download? It's pretty small
+'''
 import numpy as np
 import pandas as pd
 
