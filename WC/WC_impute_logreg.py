@@ -1,6 +1,6 @@
 '''                                 
 About: 
-    This script imputes Worker's Compensation (WC) participation. 
+    This script imputes Worker's Compensation (WC) participation using logistic regression. 
     Please refer to the documentation in the same folder 
     for more details on methodology and assumptions. The output this script is a personal level dataset that contains CPS
     individual participation indicator (WC participationc, 0 - not a recipient, 
@@ -8,10 +8,9 @@ About:
 
 Input: 
     2015 CPS (asec2015_pubuse.csv), number of recipients and their benefits amount by state in 2014 (Administrative.csv),
-    rf_probs.csv from Rf_probs.py.
 
 Output: 
-    WC_Imputation.csv, and WC_Imputation_rf.csv (imputation using random forest probabilities as well)
+    WC_imputation_logreg.csv
  
 Additional Source links: 
     SSA 2014 annual statistical report at https://www.ssa.gov/policy/docs/statcomps/supplement/2016/workerscomp.html
@@ -25,6 +24,28 @@ import random
 import statsmodels.discrete.discrete_model as sm
 import matplotlib.pyplot as plt
 
+def accuracy(targets, probabilities):
+    '''
+    This function takes estimated probabilites and rounds them up to 1 or down to zero in order to produce an accuracy metric for logistic regression commensurable with that of random forests.
+
+    Args:
+
+    targets: the correct answers, i.e. what the model is trying to estimate.
+    probabilities: the estimated probabilities
+
+    Returns:
+
+    acc: the percentage of correct guesses after rounding the probabilities.
+    '''
+    predictions = np.round(probabilities)
+    n = len(targets)
+    n_wrong = np.sum(np.abs(predictions - targets))
+    acc = (n - n_wrong)/n
+    return acc
+
+# Whether or not to print accuracy scores for logistic regression estimation
+print_acc = True
+
 # The administrative totals for 2014 come from https://www.ssa.gov/policy/docs/statcomps/supplement/2016/workerscomp.html
 claims_per_hundredthousand = np.loadtxt('claims_projected').astype(int)
 total_covered = 129600000
@@ -35,12 +56,8 @@ Avg_benefit *= 10000
 Avg_benefit = int(Avg_benefit)
 Avg_benefit /= 10000.
 
-# Random Forest probabilities of receiving WC compensation. 'rf_probs.csv' obtained from rf_probs.ipynb.
-Rf_probs = np.loadtxt('rf_probs.csv')
-
-
 # Variables we use in CPS:
-CPS_dataset = pd.read_csv('asec2015_pubuse.csv')
+CPS_dataset = pd.read_csv('../asec2015_pubuse.csv')
 columns_to_keep = ['a_whyabs','a_mjind','chsp_val','dis_hp','dis_cs','finc_dis', 'fdisval','dis_yn','wc_yn', 'wc_val','a_pfrel', 'rsnnotw', 'hfoodsp','ch_mc','caid', 
 'cov_hi', 'fwsval', 'mcaid','hrwicyn','wicyn','oi_off','paw_yn','paw_typ','paw_val', 
 'peioocc', 'a_wksch', 'wemind', 'prcitshp', 'gestfips','marsupwt','a_age','wsal_val','semp_val','frse_val',
@@ -53,7 +70,7 @@ CPS_dataset = CPS_dataset.replace({'NIU' : 0}, regex = True)
 CPS_dataset = CPS_dataset.replace({'None' : 0}, regex = True)
 # CPS_dataset.to_csv('CPS_WC.csv', index=False)
 # CPS_dataset = pd.read_csv('CPS_WC.csv')
-
+ 
 CPS_dataset.a_sex = np.where(CPS_dataset.a_sex == 'Male', 1, 0)
 
 CPS_dataset.dis_hp = np.where(CPS_dataset.dis_hp == 'No', 0, CPS_dataset.dis_hp)
@@ -106,6 +123,8 @@ model = sm.Logit(endog = CPS_dataset.indicator, exog = CPS_dataset[['intercept',
  'age_squared','dis_cs', 'dis_hp', 'finc_dis', 'cov_hi', 'a_sex']])
 logit_res = model.fit()
 probs = logit_res.predict()
+targets = CPS_dataset.wc_yn
+print 'Accuracy score for logistic regression estimation', accuracy(targets, probs)
 CPS_dataset['probs'] = probs
 
 # CPS total benefits and Administrative total benefits
@@ -197,16 +216,16 @@ r['adjust ratio'] = r['adjust ratio'].astype(int)
 r['adjust ratio'] /= 10000
 r.to_csv('amount.csv', index=False)
 
-CPS_dataset.to_csv('WC_imputation.csv', 
+CPS_dataset.to_csv('WC_imputation_logreg.csv', 
                    columns=['peridnum','WC_participation', 'WC_impute'])
-
 
 ## Checking post-adjustment totals to see if they match admin totals
 CPS_dataset.WC_participation = np.where(CPS_dataset.WC_participation == 2 , 1, CPS_dataset.WC_participation)
 CPS_dataset['after_totals_reciepts'] = (CPS_dataset.WC_participation * CPS_dataset.marsupwt)
 CPS_dataset['after_totals_outlays'] = (CPS_dataset.WC_impute * CPS_dataset.marsupwt)
-total_outlays = CPS_dataset['after_totals_outlays'].sum().astype(int)
-total_recipients_CPS = CPS_dataset['after_totals_reciepts'].sum().astype(int)
+total_outlays = int(CPS_dataset['after_totals_outlays'].sum())
+total_recipients_CPS = int(CPS_dataset['after_totals_reciepts'].sum())
+
 
 df = pd.DataFrame()
 df['Country'] = ['USA']
@@ -214,82 +233,4 @@ df['post augment CPS total benefits (annual)'] = [total_outlays]
 df['post augment CPS total infant recipients'] = [total_recipients_CPS]
 df['Admin total benefits (annual)'] = [total_benefits]
 df['Admin total recipients'] = [total_recipients]
-df.to_csv('post_augment_adminCPS_totals.csv')
-
-
-
-'''Using Random Forest probabilities'''
-# RF probabilities predicted with 85% accuracy those receiving WC in the test set, and with 99% accuracy 
-# everyone including those who didn't receive WC
-CPS_dataset['RfYes'] = Rf_probs[:, 1]
-
-probs = CPS_dataset['RfYes']
-
-CPS_dataset['impute'] = np.zeros(len(CPS_dataset))
-CPS_dataset['WC_impute'] = np.zeros(len(CPS_dataset))
-
-non_current = (CPS_dataset.indicator==0)
-current = (CPS_dataset.indicator==1)
-random.seed()
-
-if d['Difference in Population'][d['Fips'] == 'USA'].values[0] < 0:
-    pass
-else:
-    not_imputed = (CPS_dataset.impute==0)
-    pool_index = CPS_dataset[not_imputed&non_current].index
-    pool = DataFrame({'weight': CPS_dataset.marsupwt[pool_index], 'prob': probs[pool_index]},
-                    index=pool_index)
-    pool = pool.sort_values(by = 'prob', ascending=False)
-    pool['cumsum_weight'] = pool['weight'].cumsum()
-    pool['distance'] = abs(pool.cumsum_weight-d['Difference in Population'][d['Fips'] == 'USA'].values)
-    min_index = pool.sort_values(by='distance')[:1].index
-    min_weight = int(pool.loc[min_index].cumsum_weight)
-    pool['impute'] = np.where(pool.cumsum_weight<=min_weight+10 , 1, 0)
-    CPS_dataset.loc[pool.index[pool['impute']==1], 'impute'] = 1
-    CPS_dataset.loc[pool.index[pool['impute']==1], 'WC_impute'] = Avg_benefit
-
-
-#Adjustment ratio
-results = {}
-imputed = (CPS_dataset.impute == 1)
-has_val = (CPS_dataset.indicator == 1)
-no_val = (CPS_dataset.wc_val == 0)
-
-current_total = (CPS_dataset.wc_val * CPS_dataset.marsupwt).sum() 
-imputed_total = (CPS_dataset.WC_impute * CPS_dataset.marsupwt)[imputed].sum()
-on_file = current_total + imputed_total
-admin_total = total_benefits
-adjust_ratio = admin_total / on_file
-this_state_num = ['USA', on_file, admin_total, adjust_ratio]
-results['USA'] = this_state_num
-CPS_dataset.WC_impute = np.where(has_val, CPS_dataset.wc_val * adjust_ratio, CPS_dataset.WC_impute)
-CPS_dataset.WC_impute = np.where(no_val, CPS_dataset.WC_impute * adjust_ratio, CPS_dataset.WC_impute)
-CPS_dataset["WC_participation"] = np.zeros(len(CPS_dataset))
-CPS_dataset["WC_participation"] = np.where(CPS_dataset.impute == 1, 2, 0) #Augmented
-CPS_dataset['WC_participation'] = np.where(has_val, 1, CPS_dataset.WC_participation)
-r = DataFrame(results).transpose()
-r.columns = ['Country', 'Imputed', 'Admin', 'adjust ratio']
-r['Imputed'] = r['Imputed'].astype(int)
-r['adjust ratio'] *= 10000
-r['adjust ratio'] = r['adjust ratio'].astype(int)
-r['adjust ratio'] /= 10000
-r.to_csv('amount.csv', index=False)
-
-CPS_dataset.to_csv('WC_Imputation_rf.csv', 
-                   columns=['peridnum','WC_participation', 'WC_impute'])
-
-
-## Checking post-adjustment totals to see if they match admin totals
-CPS_dataset.WC_participation = np.where(CPS_dataset.WC_participation == 2 , 1, CPS_dataset.WC_participation)
-CPS_dataset['after_totals_reciepts'] = (CPS_dataset.WC_participation * CPS_dataset.marsupwt)
-CPS_dataset['after_totals_outlays'] = (CPS_dataset.WC_impute * CPS_dataset.marsupwt)
-total_outlays = CPS_dataset['after_totals_outlays'].sum().astype(int)
-total_recipients_CPS = CPS_dataset['after_totals_reciepts'].sum().astype(int)
-
-df = pd.DataFrame()
-df['Country'] = ['USA']
-df['post augment CPS total benefits (annual)'] = [total_outlays]
-df['post augment CPS total recipients'] = [total_recipients_CPS]
-df['Admin total benefits (annual)'] = [total_benefits]
-df['Admin total recipients'] = [total_recipients]
-df.to_csv('post_augment_adminCPS_totals_rf.csv')
+df.to_csv('post_augment_adminCPS_totals_logreg.csv')
