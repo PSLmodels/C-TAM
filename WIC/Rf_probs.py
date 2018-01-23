@@ -99,7 +99,7 @@ def Init_CPS_Vars(CPS):
     return CPS
 
 
-CPS = pd.read_csv('asec2015_pubuse.csv')
+CPS = pd.read_csv('../asec2015_pubuse.csv')
 CPS = Init_CPS_Vars(CPS)
 
 CPS.a_age = np.where(CPS.a_age == "80-84 years of age",
