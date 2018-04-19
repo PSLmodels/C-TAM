@@ -2,7 +2,7 @@
 
 Benefits and participation for welfare and transfer programs are systematically underreported in the Current Population Survey (CPS) Annual Social and Economic supplement (ASEC). For some programs like Medicaid and Medicare, participation is reported but benefits are excluded entirely. The implicit marginal tax rates that stem from transfer and benefits programs are not included in the CPS.
 
-The CPS Transfer Augmentation Model (C-TAM) model adjusts the CPS ASEC for the under-reporting of welfare and transfer program participation and benefits, imputes benefits where they are excluded, and imputes marginal tax rates that stem from welfare and transfer programs. Adjusted welfare and transfer data can serve as the basis for micro-simulating policy reforms (for example, [Basic Income](https://github.com/open-source-economics/Benefits/blob/master/Basic%20Income.pdf)) that replace existing welfare and transfer programs.
+The CPS Transfer Augmentation Model (C-TAM) model adjusts the CPS ASEC for the under-reporting of welfare and transfer program participation and benefits, imputes benefits where they are excluded, and imputes marginal tax rates that stem from welfare and transfer programs. Adjusted welfare and transfer data can serve as the basis for micro-simulating policy reforms (for example, [Basic Income](https://github.com/open-source-economics/Benefits/blob/master/Basic%20Income.pdf)) that replace existing welfare and transfer programs. In addition to 2014 benefits, we have also inplemented a rudimentary version of extrapolation, which is currently store in [taxdata](https://github.com/open-source-economics/taxdata/tree/master/cps_stage3) Repo.
 
 Note: when processing the raw CPS files from NBER, use the provided STATA scripts, rather than the SAS scripts.
 
@@ -31,17 +31,12 @@ Currently this Repo includes the following programs<sup>1</sup>, derived from 20
 
 Current Work-In-Progress:
 
-- Benefit extrpolation: see more details in taxdata [issue #106](https://github.com/open-source-economics/taxdata/issues/106) and Tax-Calculator [PR #1500](https://github.com/open-source-economics/Tax-Calculator/pull/1500)
-- Minor adjustments to TANF
 - Impute institutional population from American Community Survey population
-
-Intermediate term improvements (2017):
-
 - Add administrative costs for all welfare programs
 - Impute immigrant status
-- Estimate Participation Tax Rate (PTR) for welfare participates
 
-Long term improvements (2018):
+
+Long term improvements:
 
 - Model Medicaid cliff marginal tax rate
 - Expand the database to include 2015 CPS
