@@ -1,0 +1,9 @@
+# TANF Imputation
+
+Temporary Assistance for Needy Families (TANF) is a program administratered by Office of Family Assistance (OFA), designed and implemented by state governments. Each year state governments receive a block grant from Treasury and, to maintain the eligibility, match the federal block grant with a certain level of state funds ([section 409(a)(7)](https://www.ssa.gov/OP_Home/ssact/title04/0409.htm)), which is knowned as 'Maintenance of Effort (MOE).' Thus the total TANF spending includes both federal grants and state MOE funds.
+
+The federal and state funds cover two categories of expenditure: Assistance and Non-Assistance. Assistance refers to benefits for on-going basic needs, including but not limited to food, shelter, utilities and household goods, as well as supportive services, such as childcare assistance and transportation for job search or training. Non-Assitance covers expenditures that fulfill the goal of TANF but do not count as Assistance. More details are available at [HHS's website](https://www.acf.hhs.gov/sites/default/files/ofa/categories_and_definitions_for_tanf_and_moe_funds.pdf). Both categories seem to include cash and non-cash benefits.
+
+Our imputation targets are the aggregate benefit amounts that comprise assistance and non-assitance. Total participants sum up to 3.9 million in 2014 ([TANF Caseload Data 2014; TANF and SSP-MOE combined](https://www.acf.hhs.gov/ofa/resource/caseload-data-2014)) and total expenditure is $29.3 billion ([TANF Financial Data - FY 2014; Total Fed & State Expenditure](https://www.acf.hhs.gov/ofa/resource/tanf-financial-data-fy-2014)). We based our imputation on 2015 CPS ASEC, which contains 2014 participation and benefits.
+
+Please refer to the [general documentation](https://github.com/open-source-economics/C-TAM/blob/master/C-TAM%20Documentation%20v0.1.3.pdf) for more details on the imputation method and results.
