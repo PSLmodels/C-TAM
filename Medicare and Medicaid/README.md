@@ -34,4 +34,4 @@ Although current goal is to target the total expense, we tried to maintain the i
 
 Footnote:
 
-[1]. This is imputed as 15% of long-term service and supports expenditure. Please refer to footnote 72 for more information. 
+[1]. This is imputed as 15% of long-term service and supports expenditure. Please refer to footnote 72 in the general documentation for more information. 
