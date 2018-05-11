@@ -207,7 +207,6 @@ colvals = train_x.columns.values
 
 features = Rf.feature_importances_
 maxes = np.argsort(features)[::-1]
-print list(train_x[maxes].columns.values)
 print features[maxes]
 
 # important features for infants:
@@ -261,7 +260,6 @@ colvals = train_x.columns.values
 
 features = Rf.feature_importances_
 maxes = np.argsort(features)[::-1]
-print list(train_x[maxes].columns.values)
 print features[maxes]
 
 # important features for children:
@@ -314,7 +312,6 @@ colvals = train_x.columns.values
 
 features = Rf.feature_importances_
 maxes = np.argsort(features)[::-1]
-print list(train_x[maxes].columns.values)
 print features[maxes]
 
 # important features for women:
