@@ -4,20 +4,21 @@ import numpy as np
 import random
 import statsmodels.discrete.discrete_model as sm
 import matplotlib.pyplot as plt
-import seaborn
 
 # Get ACS US person record datasets part a and b
-ACS_dataset = pd.read_csv('usparta_allvars.csv')
-ACS_dataset2 = pd.read_csv('uspartb_allvars.csv')
+ACS_dataset = pd.read_csv('./csv_pus/ss15pusa.csv')
+ACS_dataset2 = pd.read_csv('./csv_pus/ss15pusb.csv')
 ACS_dataset = pd.concat([ACS_dataset, ACS_dataset2])
 ACS_dataset = ACS_dataset.fillna(0)
+ACS_dataset.columns = [x.lower() for x in ACS_dataset.columns]
 ACS_dataset = ACS_dataset[ACS_dataset.relp == 16] # Keep institutionalized only
 ACS_dataset.adjinc /= 1e6
 
 # Get ACS US household record datasets part a and b
-ACS_dataset_household = pd.read_csv('usparta_allvars_household.csv')
-ACS_dataset2_household = pd.read_csv('uspartb_allvars_household.csv')
+ACS_dataset_household = pd.read_csv('./csv_hus/ss15husa.csv')
+ACS_dataset2_household = pd.read_csv('./csv_hus/ss15husb.csv')
 ACS_dataset_household = pd.concat([ACS_dataset_household, ACS_dataset2_household])
+ACS_dataset_household.columns = [x.lower() for x in ACS_dataset_household.columns]
 ACS_dataset_household = ACS_dataset_household[ACS_dataset_household.type == 2] # Keep institutionalized only
 
 # Food stamp variable kept and other demographics that may be helpful, and that are present in household data
